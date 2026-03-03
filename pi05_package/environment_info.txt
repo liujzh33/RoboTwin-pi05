@@ -1,0 +1,20 @@
+打包时间: Mon Dec 29 08:06:44 PM CST 2025
+项目路径: /mnt/data1/liujingzhi/RoboTwin/policy/pi05
+Python 版本: Python 3.13.5
+UV 版本: uv 0.8.22
+Conda 环境: RoboTwin
+
+重要路径:
+- 项目目录: /mnt/data1/liujingzhi/RoboTwin/policy/pi05
+- 虚拟环境: /mnt/data1/liujingzhi/RoboTwin/policy/pi05/.venv
+- curobo: /mnt/data1/liujingzhi/RoboTwin/policy/pi05/../../envs/curobo (如果存在)
+
+依赖管理:
+- 使用 uv 管理依赖
+- 配置文件: pyproject.toml, uv.lock
+- 虚拟环境: .venv (使用 uv sync 创建，基于 RoboTwin conda 环境)
+- 新服务器已有 RoboTwin conda 环境，将使用该环境重新创建 .venv
+
+本地路径依赖:
+- lerobot: /mnt/data1/liujingzhi/RoboTwin/policy/pi05/lerobot
+- openpi-client: /mnt/data1/liujingzhi/RoboTwin/policy/pi05/packages/openpi-client
