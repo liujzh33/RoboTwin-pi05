@@ -42,6 +42,7 @@ def create_empty_dataset(
     has_velocity: bool = False,
     has_effort: bool = False,
     dataset_config: DatasetConfig = DEFAULT_DATASET_CONFIG,
+    with_subtask_fields: bool = False,
 ) -> LeRobotDataset:
     motors = [
         "left_waist",
@@ -111,6 +112,13 @@ def create_empty_dataset(
                 "width",
             ],
         }
+
+    # Pi0.5 LoadSubtaskFromInstructions 需要与 blocks_ranking_rgb_pi05_200 一致的字段
+    if with_subtask_fields:
+        features["instructions"] = {"dtype": "string", "shape": (1,), "names": None}
+        features["subtasks"] = {"dtype": "string", "shape": (1,), "names": None}
+        features["frame_idx"] = {"dtype": "int32", "shape": (1,), "names": None}
+        features["phase_info"] = {"dtype": "string", "shape": (1,), "names": None}
 
     if Path(HF_LEROBOT_HOME / repo_id).exists():
         shutil.rmtree(HF_LEROBOT_HOME / repo_id)
@@ -205,6 +213,7 @@ def populate_dataset(
     hdf5_files: list[Path],
     task: str,
     episodes: list[int] | None = None,
+    with_subtask_fields: bool = False,
 ) -> LeRobotDataset:
     if episodes is None:
         episodes = range(len(hdf5_files))
@@ -214,20 +223,38 @@ def populate_dataset(
 
         imgs_per_cam, state, action, velocity, effort = load_raw_episode_data(ep_path)
         num_frames = state.shape[0]
-        # add prompt
-        dir_path = os.path.dirname(ep_path)
-        json_Path = f"{dir_path}/instructions.json"
 
-        with open(json_Path, 'r') as f_instr:
+        dir_path = os.path.dirname(ep_path)
+        json_path = os.path.join(dir_path, "instructions.json")
+
+        with open(json_path, "r", encoding="utf-8") as f_instr:
             instruction_dict = json.load(f_instr)
-            instructions = instruction_dict['instructions']
-            instruction = np.random.choice(instructions)
+
+        instructions = instruction_dict.get("instructions", [])
+        subtasks_list = instruction_dict.get("subtasks", [])
+        phase_info = instruction_dict.get("phase_info", {})
+
+        if not instructions:
+            instructions = ["Default instruction"]
+        instruction = str(np.random.choice(instructions))
+
+        # 供 LoadSubtaskFromInstructions 使用的序列化值（每帧相同，仅 frame_idx 随帧变化）
+        instructions_str = json.dumps(instructions, ensure_ascii=False)
+        subtasks_str = json.dumps(subtasks_list, ensure_ascii=False)
+        phase_info_str = json.dumps(phase_info, ensure_ascii=False)
+
         for i in range(num_frames):
             frame = {
                 "observation.state": state[i],
                 "action": action[i],
                 "task": instruction,
             }
+
+            if with_subtask_fields:
+                frame["instructions"] = instructions_str
+                frame["subtasks"] = subtasks_str
+                frame["frame_idx"] = np.array([i], dtype=np.int32)
+                frame["phase_info"] = phase_info_str
 
             for camera, img_array in imgs_per_cam.items():
                 frame[f"observation.images.{camera}"] = img_array[i]
@@ -242,6 +269,18 @@ def populate_dataset(
     return dataset
 
 
+def _sort_key_multi_task(p: Path) -> tuple[str, int]:
+    """Sort by (task_dir, episode_num) so multi-task dirs are merged in order."""
+    import re
+    s = str(p)
+    # .../task_name/episode_K/episode_K.hdf5 -> task_dir = task_name, ep = K
+    m = re.search(r"episode_(\d+)", s)
+    ep_num = int(m.group(1)) if m else 0
+    # Parent of hdf5 is episode_X dir, its parent is task dir
+    task_dir = str(p.parent.parent) if p.parent else ""
+    return (task_dir, ep_num)
+
+
 def port_aloha(
     raw_dir: Path,
     repo_id: str,
@@ -253,6 +292,7 @@ def port_aloha(
     is_mobile: bool = False,
     mode: Literal["video", "image"] = "image",
     dataset_config: DatasetConfig = DEFAULT_DATASET_CONFIG,
+    with_subtask_fields: bool = True,
 ):
     if (HF_LEROBOT_HOME / repo_id).exists():
         shutil.rmtree(HF_LEROBOT_HOME / repo_id)
@@ -263,9 +303,12 @@ def port_aloha(
         # download_raw(raw_dir, repo_id=raw_repo_id)
     hdf5_files = []
     for root, _, files in os.walk(raw_dir):
-        for filename in fnmatch.filter(files, '*.hdf5'):
+        for filename in fnmatch.filter(files, "*.hdf5"):
             file_path = os.path.join(root, filename)
-            hdf5_files.append(file_path)
+            hdf5_files.append(Path(file_path))
+
+    # Multi-task: sort by (task_dir, episode_num) so all episodes of task A then B then C...
+    hdf5_files.sort(key=_sort_key_multi_task)
 
     dataset = create_empty_dataset(
         repo_id,
@@ -274,12 +317,14 @@ def port_aloha(
         has_effort=has_effort(hdf5_files),
         has_velocity=has_velocity(hdf5_files),
         dataset_config=dataset_config,
+        with_subtask_fields=with_subtask_fields,
     )
     dataset = populate_dataset(
         dataset,
         hdf5_files,
         task=task,
         episodes=episodes,
+        with_subtask_fields=with_subtask_fields,
     )
     # dataset.consolidate()
 

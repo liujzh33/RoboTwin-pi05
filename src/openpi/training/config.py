@@ -499,16 +499,16 @@ class TrainConfig:
     batch_size: int = 32
     # Number of workers to use for the data loader. Increasing this number will speed up data loading but
     # will increase memory and CPU usage.
-    num_workers: int = 2
+    num_workers: int = 8
     # Number of train steps (batches) to run.
     num_train_steps: int = 30_000
 
     # How often (in steps) to log training metrics.
-    log_interval: int = 10
+    log_interval: int = 100
     # How often (in steps) to save checkpoints.
-    save_interval: int = 100
+    save_interval: int = 1000
     # If set, any existing checkpoints matching step % keep_period == 0 will not be deleted.
-    keep_period: int | None = 1000
+    keep_period: int | None = 5000
 
     # If true, will overwrite the checkpoint directory if it already exists.
     overwrite: bool = False
@@ -611,6 +611,38 @@ _CONFIGS = [
         num_train_steps=30001,
         batch_size=64,
         fsdp_devices=2,
+    ),
+    # pi05_base multi-task (5 tasks): beat_block_hammer, blocks_ranking_rgb, blocks_ranking_size, click_alarmclock, click_bell
+    # 先将 5 个任务的 processed_data 复制到 training_data/pi05_multi_task_5，再运行 generate.sh 生成该 repo_id
+    TrainConfig(
+        name="pi05_aloha_full_base_multi_task_5",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="pi05_multi_task_5",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                })
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/mnt/data/linbingqian/openpi/checkpoints11/pi05_base/params"),
+        num_train_steps=30001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
     ),
     # pi05_base with multi-frame (n_obs_steps=2) for beat_block_hammer
     TrainConfig(
