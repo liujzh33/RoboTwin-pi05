@@ -1,6 +1,6 @@
 """
-click_alarmclock 子任务描述丰富化
-仅 2 阶段：① 靠近物体（到达上方），夹爪闭合后 → ② click 物体。
+click_alarmclock 子任务描述丰富化（CycleVLA 风格，动词开头）
+3 阶段：悬停 → 握拳准备 → 按压并返回。
 """
 
 import os
@@ -12,45 +12,60 @@ from tqdm import tqdm
 DATA_ROOT = "/mnt/data1/liujingzhi/RoboTwin/policy/pi05/processed_data/click_alarmclock-aloha-agilex_randomized_500-200"
 
 PHASE_VARIANTS = {
-    # Phase 0: 靠近物体（到达目标上方），直至夹爪闭合
+    # Phase 0: Approach
     0: [
-        "Approach the alarm clock (reach above it)",
-        "Move to the alarm clock and position above it",
-        "Reach above the alarm clock",
-        "Position the end-effector above the alarm clock",
-        "Get close to the alarm clock from above",
-        "Align the gripper above the alarm clock",
-        "Move the arm above the alarm clock",
-        "Reach for the alarm clock and get above it",
-        "Go to the alarm clock and hover above it",
-        "Approach from above until the gripper closes",
+        "Move the gripper above the alarm clock.",
+        "Position the arm over the alarm clock.",
+        "Navigate the gripper to the top of the clock.",
+        "Hover the end-effector above the alarm clock.",
+        "Bring the gripper directly over the alarm clock.",
+        "Align the arm above the clock button.",
+        "Reach the space above the alarm clock.",
+        "Move towards the top of the alarm clock.",
+        "Direct the gripper above the target clock.",
+        "Approach the alarm clock from above.",
     ],
-    # Phase 1: 点击物体
+    # Phase 1: Close to prepare (握拳)
     1: [
-        "Click the alarm clock",
-        "Press the alarm clock",
-        "Tap the alarm clock",
-        "Trigger the alarm clock",
-        "Activate the alarm clock by clicking",
-        "Perform the click on the alarm clock",
-        "Execute the click on the alarm clock",
-        "Press down on the alarm clock",
-        "Click to activate the alarm clock",
+        "Close the gripper to prepare for clicking.",
+        "Make a fist with the gripper to press the clock.",
+        "Shut the fingers to prepare for pushing.",
+        "Close the gripper tight to click the alarm.",
+        "Prepare to click by closing the gripper.",
+        "Contract the fingers to form a pressing pose.",
+        "Close the hand to get ready to push the clock.",
+        "Fold the gripper to strike the alarm clock.",
+        "Clench the gripper in preparation for the click.",
+        "Close the end-effector to press the button.",
+    ],
+    # Phase 2: Click and return
+    2: [
+        "Click the alarm clock and return.",
+        "Move the gripper down to press the alarm clock.",
+        "Push the alarm clock button and retreat.",
+        "Press down on the alarm clock.",
+        "Strike the top of the alarm clock.",
+        "Push the clock button down and move back.",
+        "Click the clock with the closed gripper.",
+        "Perform a downward press on the alarm clock.",
+        "Hit the alarm clock button.",
+        "Lower the arm to click the alarm clock.",
     ],
 }
 
 FALLBACK_VARIANTS = ["Complete the task.", "Continue with the next step."]
 
 
-def main():
-    if not os.path.exists(DATA_ROOT):
-        print(f"Error: Data root not found: {DATA_ROOT}")
+def main(data_root=None):
+    root = (data_root or DATA_ROOT).rstrip("/")
+    if not os.path.exists(root):
+        print(f"Error: Data root not found: {root}")
         return
 
-    episode_dirs = sorted(glob.glob(os.path.join(DATA_ROOT, "episode_*")))
+    episode_dirs = sorted(glob.glob(os.path.join(root, "episode_*")))
     episode_dirs.sort(key=lambda x: int(os.path.basename(x).split("_")[1]))
 
-    print(f"Found {len(episode_dirs)} episodes. Enriching (2 phases: Approach → Click)...")
+    print(f"Found {len(episode_dirs)} episodes. Enriching (3 phases: Approach → Close to prepare → Click and return)...")
 
     success_count = 0
     for ep_dir in tqdm(episode_dirs):
@@ -72,7 +87,7 @@ def main():
             if num_phases is None and data.get("subtasks"):
                 num_phases = len(data["subtasks"][0])
             if num_phases is None:
-                num_phases = 2
+                num_phases = 3
 
             new_subtasks_list = []
             for _ in range(len(instructions)):
@@ -95,4 +110,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    p = argparse.ArgumentParser(description="click_alarmclock 子任务语言丰富化（clean/random 共用一套）")
+    p.add_argument("--data_dir", type=str, default=None, help="processed_data 目录")
+    args = p.parse_args()
+    main(data_root=args.data_dir)

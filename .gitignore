@@ -3,6 +3,7 @@ assets/
 checkpoints/
 data/
 wandb/
+analysis_results/
 
 # Large archives (keep repo small, GitHub limit 100MB/file)
 *.zip

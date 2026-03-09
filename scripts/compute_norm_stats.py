@@ -5,6 +5,13 @@ will compute the mean and standard deviation of the data in the dataset and save
 to the config assets directory.
 """
 
+# Restrict visible GPUs before any import that touches JAX/CUDA (e.g. data_loader imports jax).
+# Norm stats are CPU-only; this avoids occupying all GPUs when env is not passed by uv run.
+import os
+
+if "CUDA_VISIBLE_DEVICES" not in os.environ:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 import time
 import numpy as np
 from pathlib import Path
