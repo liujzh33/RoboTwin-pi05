@@ -1,0 +1,18 @@
+# Basic experiment configuration (keep unchanged)
+policy_name: null
+task_name: null
+task_config: null
+ckpt_setting: null
+seed: null
+instruction_type: unseen
+
+# Add Parameters You Need
+train_config_name: null
+model_name: null
+checkpoint_id: 30000
+pi0_step: 20
+
+# Whether to load the consolidated PyTorch checkpoint from
+# `policy/pi05/checkpoint_torch` instead of the original JAX
+# checkpoints under `policy/pi05/checkpoints/.../30000`.
+use_torch_checkpoint: false
