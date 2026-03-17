@@ -1,3 +1,8 @@
+"""
+blocks_ranking_rgb_v1 子任务描述丰富化（CycleVLA 风格，动词开头）
+13 阶段：红→左, 绿→中, 蓝→右（每色：接近→抓取→搬运→释放）+ 复位。
+"""
+
 import os
 import json
 import glob
@@ -5,157 +10,233 @@ import random
 from tqdm import tqdm
 
 # ================= 配置区域 =================
-# 您的数据路径 (请确保路径正确)
 DATA_ROOT = "/mnt/data1/liujingzhi/RoboTwin/policy/pi05/processed_data/blocks_ranking_rgb-aloha-agilex_randomized_500-200"
 
-# === 7阶段多样化词库 (对应 3次抓取 + 3次放置 + 1次复位) ===
+# === 13 阶段多样化词库 (红->左, 绿->中, 蓝->右) ===
 PHASE_VARIANTS = {
-    # Phase 0: 抓取红色 (Pick Red)
     0: [
-        "Pick up the red block",
-        "Grasp the red cube",
-        "Grab the red object",
-        "Retrieve the red block from the table",
-        "Secure the red cube with the gripper",
-        "Take hold of the red block",
-        "Reach for and grasp the red block",
-        "Initiate the task by picking up the red block",
-        "Locate and grab the red cube"
+        "Move the gripper above the red block.",
+        "Position the gripper over the red cube.",
+        "Navigate the arm above the red block.",
+        "Bring the end-effector over the red object.",
+        "Hover the gripper above the red block.",
+        "Direct the gripper to the top of the red cube.",
+        "Align the gripper above the red block.",
+        "Reach the space directly above the red cube.",
+        "Move towards the top of the red block.",
+        "Approach the red block from above.",
     ],
-    # Phase 1: 放置红色 (Place Red - Far Left)
     1: [
-        "Place the red block on the far left",
-        "Set the red block down at the leftmost position",
-        "Position the red cube on the far left side",
-        "Drop the red block to start the sequence on the left",
-        "Move the red block to the far left and release it",
-        "Establish the starting point by placing red on the left",
-        "Put the red object on the extreme left",
-        "Align the red block on the left side of the workspace"
+        "Close the gripper to grasp the red block.",
+        "Grasp the red block by closing the fingers.",
+        "Secure the red cube with the gripper.",
+        "Pick up the red block.",
+        "Clamp down on the red object.",
+        "Take hold of the red block.",
+        "Close the fingers around the red cube.",
+        "Squeeze the gripper to hold the red block.",
+        "Grip the red block tightly.",
+        "Engage the gripper to pick the red cube.",
     ],
-    # Phase 2: 抓取绿色 (Pick Green)
     2: [
-        "Pick up the green block",
-        "Grasp the green cube",
-        "Grab the green object",
-        "Now, take the green block",
-        "Retrieve the green cube",
-        "Secure the green block",
-        "Move to grasp the green block",
-        "Select the green block next",
-        "Pick up the green one"
+        "Move the gripper to the left target position while holding the red block.",
+        "Transport the red block to the left side.",
+        "Carry the red cube to the left target.",
+        "Shift the grasped red block to the left.",
+        "Navigate to the left position with the red block.",
+        "Bring the red object to the target on the left.",
+        "Move the red cube towards the left placement area.",
+        "Transfer the red block to the left.",
+        "Relocate the red block to the left target.",
+        "Guide the red cube to the left side of the workspace.",
     ],
-    # Phase 3: 放置绿色 (Place Green - Next to Red)
     3: [
-        "Place the green block next to the red block",
-        "Put the green block beside the red one",
-        "Position the green cube to the right of the red block",
-        "Set the green block adjacent to the red block",
-        "Align the green block next to the red cube",
-        "Drop the green object beside the red one",
-        "Place green directly next to red",
-        "Continue the sequence by placing green next to red"
+        "Open the gripper to release the red block.",
+        "Release the red block by opening the fingers.",
+        "Drop the red cube at the current position.",
+        "Let go of the red block.",
+        "Open the fingers to place the red object.",
+        "Unclasp the gripper to release the red block.",
+        "Place the red block down by opening the gripper.",
+        "Release grip on the red cube.",
+        "Set the red block down and open the gripper.",
+        "Free the red block from the gripper.",
     ],
-    # Phase 4: 抓取蓝色 (Pick Blue)
     4: [
-        "Pick up the blue block",
-        "Grasp the blue cube",
-        "Grab the blue object",
-        "Finally, take the blue block",
-        "Retrieve the blue cube",
-        "Secure the blue block with the gripper",
-        "Pick up the last block, the blue one",
-        "Grasp the blue square",
-        "Take hold of the blue cube"
+        "Move the gripper above the green block.",
+        "Position the gripper over the green cube.",
+        "Navigate the arm above the green block.",
+        "Bring the end-effector over the green object.",
+        "Hover the gripper above the green block.",
+        "Direct the gripper to the top of the green cube.",
+        "Align the gripper above the green block.",
+        "Reach the space directly above the green cube.",
+        "Move towards the top of the green block.",
+        "Approach the green block from above.",
     ],
-    # Phase 5: 放置蓝色 (Place Blue - Next to Green)
     5: [
-        "Place the blue block next to the green block",
-        "Put the blue block beside the green one",
-        "Position the blue cube to the right of the green block",
-        "Set the blue block adjacent to the green block",
-        "Complete the line by placing blue next to green",
-        "Align the blue block next to the green cube",
-        "Finish the arrangement by putting blue beside green",
-        "Place the blue object at the end of the row"
+        "Close the gripper to grasp the green block.",
+        "Grasp the green block by closing the fingers.",
+        "Secure the green cube with the gripper.",
+        "Pick up the green block.",
+        "Clamp down on the green object.",
+        "Take hold of the green block.",
+        "Close the fingers around the green cube.",
+        "Squeeze the gripper to hold the green block.",
+        "Grip the green block tightly.",
+        "Engage the gripper to pick the green cube.",
     ],
-    # Phase 6: 复位 (Return/Finish)
     6: [
-        "Return to a neutral position",
-        "Move the arm back to the start position",
-        "Reset the arm to a safe pose",
-        "Retract the gripper to neutral",
-        "Task complete, return to rest position",
-        "Move the end-effector away",
-        "Lift and retreat to home position",
-        "Return arm to standby",
-        "Finish task and reset"
-    ]
+        "Move the gripper to the middle target position while holding the green block.",
+        "Transport the green block to the center.",
+        "Carry the green cube to the middle target.",
+        "Shift the grasped green block to the center.",
+        "Navigate to the middle position with the green block.",
+        "Bring the green object to the target in the middle.",
+        "Move the green cube towards the central placement area.",
+        "Transfer the green block to the middle.",
+        "Relocate the green block to the center target.",
+        "Guide the green cube to the middle of the workspace.",
+    ],
+    7: [
+        "Open the gripper to release the green block.",
+        "Release the green block by opening the fingers.",
+        "Drop the green cube at the current position.",
+        "Let go of the green block.",
+        "Open the fingers to place the green object.",
+        "Unclasp the gripper to release the green block.",
+        "Place the green block down by opening the gripper.",
+        "Release grip on the green cube.",
+        "Set the green block down and open the gripper.",
+        "Free the green block from the gripper.",
+    ],
+    8: [
+        "Move the gripper above the blue block.",
+        "Position the gripper over the blue cube.",
+        "Navigate the arm above the blue block.",
+        "Bring the end-effector over the blue object.",
+        "Hover the gripper above the blue block.",
+        "Direct the gripper to the top of the blue cube.",
+        "Align the gripper above the blue block.",
+        "Reach the space directly above the blue cube.",
+        "Move towards the top of the blue block.",
+        "Approach the blue block from above.",
+    ],
+    9: [
+        "Close the gripper to grasp the blue block.",
+        "Grasp the blue block by closing the fingers.",
+        "Secure the blue cube with the gripper.",
+        "Pick up the blue block.",
+        "Clamp down on the blue object.",
+        "Take hold of the blue block.",
+        "Close the fingers around the blue cube.",
+        "Squeeze the gripper to hold the blue block.",
+        "Grip the blue block tightly.",
+        "Engage the gripper to pick the blue cube.",
+    ],
+    10: [
+        "Move the gripper to the right target position while holding the blue block.",
+        "Transport the blue block to the right side.",
+        "Carry the blue cube to the right target.",
+        "Shift the grasped blue block to the right.",
+        "Navigate to the right position with the blue block.",
+        "Bring the blue object to the target on the right.",
+        "Move the blue cube towards the right placement area.",
+        "Transfer the blue block to the right.",
+        "Relocate the blue block to the right target.",
+        "Guide the blue cube to the right side of the workspace.",
+    ],
+    11: [
+        "Open the gripper to release the blue block.",
+        "Release the blue block by opening the fingers.",
+        "Drop the blue cube at the current position.",
+        "Let go of the blue block.",
+        "Open the fingers to place the blue object.",
+        "Unclasp the gripper to release the blue block.",
+        "Place the blue block down by opening the gripper.",
+        "Release grip on the blue cube.",
+        "Set the blue block down and open the gripper.",
+        "Free the blue block from the gripper.",
+    ],
+    12: [
+        "Return to a neutral position.",
+        "Move the gripper back to the starting pose.",
+        "Reset the arm to a neutral state.",
+        "Withdraw the arm to a safe position.",
+        "Navigate the end-effector back to the rest pose.",
+        "Retract the gripper to the initial position.",
+        "Move back to the standby location.",
+        "Finish by returning to neutral.",
+        "Restore the robot arm to its home position.",
+        "Clear the workspace and return to neutral.",
+    ],
 }
-# ===========================================
 
-def main():
-    if not os.path.exists(DATA_ROOT):
-        print(f"Error: Data root not found: {DATA_ROOT}")
+FALLBACK_VARIANTS = ["Complete the task.", "Continue with the next step."]
+
+def main(data_root=None):
+    root = (data_root or DATA_ROOT).rstrip("/")
+    if not os.path.exists(root):
+        print(f"Error: Data root not found: {root}")
         return
 
     # 查找所有 episode 文件夹
-    episode_dirs = sorted(glob.glob(os.path.join(DATA_ROOT, "episode_*")))
+    episode_dirs = sorted(glob.glob(os.path.join(root, "episode_*")))
     
     # 按照数字顺序排序 (防止 episode_10 排在 episode_2 前面)
     episode_dirs.sort(key=lambda x: int(os.path.basename(x).split('_')[1]))
 
-    print(f"Found {len(episode_dirs)} episodes in {DATA_ROOT}")
-    print("Generating diverse instructions (Sequence: Red -> Green -> Blue)...")
+    print(f"Found {len(episode_dirs)} episodes in {root}")
+    print("Enriching subtasks (13 phases: Red->Left, Green->Middle, Blue->Right)...")
 
     success_count = 0
-    updated_count = 0
 
     for ep_dir in tqdm(episode_dirs):
         json_path = os.path.join(ep_dir, "instructions.json")
-        
+
         if not os.path.exists(json_path):
             continue
 
         try:
-            with open(json_path, 'r') as f:
+            with open(json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             instructions = data.get("instructions", [])
-            # 如果没有instructions字段，初始化一个默认的
             if not instructions:
-                instructions = ["Sort the blocks by color: red, green, blue."]
+                instructions = ["Sort the blocks by color: red on the left, green in the middle, blue on the right."]
                 data["instructions"] = instructions
 
+            phase_info = data.get("phase_info", {})
+            num_phases = phase_info.get("num_phases")
+            if num_phases is None and data.get("subtasks"):
+                num_phases = len(data["subtasks"][0])
+            if num_phases is None:
+                num_phases = 13
+
             new_subtasks_list = []
-            
-            # 为每一条 high-level instruction 生成对应的 subtask 序列
             for _ in range(len(instructions)):
-                # 生成 7 个阶段的描述 (Phase 0 - Phase 6)
-                # 确保每个阶段都存在于 PHASE_VARIANTS 中
                 variant = []
-                for phase_idx in range(7):
+                for phase_idx in range(num_phases):
                     if phase_idx in PHASE_VARIANTS:
                         variant.append(random.choice(PHASE_VARIANTS[phase_idx]))
                     else:
-                        variant.append(f"Phase {phase_idx} action") # Fallback
-                
+                        variant.append(random.choice(FALLBACK_VARIANTS))
                 new_subtasks_list.append(variant)
 
-            # 更新数据
             data["subtasks"] = new_subtasks_list
-
-            # 写回文件
-            with open(json_path, 'w') as f:
-                json.dump(data, f, indent=2)
-            
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
             success_count += 1
 
         except Exception as e:
             print(f"Error processing {ep_dir}: {e}")
 
     print(f"\nDone! Successfully updated {success_count}/{len(episode_dirs)} episodes.")
-    print("Instructions have been enriched with diverse vocabulary while strictly maintaining the R->G->B sorting logic.")
+    print("Subtask descriptions are now diverse (CycleVLA style) for Red->Left, Green->Middle, Blue->Right.")
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    p = argparse.ArgumentParser(description="blocks_ranking_rgb_v1 子任务语言丰富化（clean/random 共用一套）")
+    p.add_argument("--data_dir", type=str, default=None, help="processed_data 目录")
+    args = p.parse_args()
+    main(data_root=args.data_dir)

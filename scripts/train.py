@@ -67,9 +67,15 @@ def init_wandb(
     ckpt_dir = config.checkpoint_dir
     if not ckpt_dir.exists():
         raise FileNotFoundError(f"Checkpoint directory {ckpt_dir} does not exist.")
+    # When resuming, always start a new wandb run so that step counts (16100, 16200, ...) are
+    # accepted. Resuming the old run would make wandb reject steps < last logged step (e.g. 18001).
     if resuming:
-        run_id = (ckpt_dir / "wandb_id.txt").read_text().strip()
-        wandb.init(id=run_id, resume="must", project=config.project_name)
+        wandb.init(
+            name=f"{config.exp_name} (resumed)",
+            config=dataclasses.asdict(config),
+            project=config.project_name,
+        )
+        (ckpt_dir / "wandb_id.txt").write_text(wandb.run.id)
     else:
         wandb.init(
             name=config.exp_name,

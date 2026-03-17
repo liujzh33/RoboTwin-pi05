@@ -5,6 +5,14 @@ will compute the mean and standard deviation of the data in the dataset and save
 to the config assets directory.
 """
 
+# Restrict visible GPUs before any import that touches JAX/CUDA (e.g. data_loader imports jax).
+# Norm stats are CPU-only; this avoids occupying all GPUs when env is not passed by uv run.
+import os
+
+if "CUDA_VISIBLE_DEVICES" not in os.environ:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+import time
 import numpy as np
 from pathlib import Path
 import tqdm
@@ -87,9 +95,15 @@ def create_rlds_dataloader(
     return data_loader, num_batches
 
 
-def main(config_name: str, max_frames: int | None = None):
+def main(
+    config_name: str,
+    max_frames: int | None = None,
+    num_workers: int | None = None,
+):
+    t0 = time.perf_counter()
     config = _config.get_config(config_name)
     data_config = config.data.create(config.assets_dirs, config.model)
+    nw = num_workers if num_workers is not None else config.num_workers
 
     if data_config.rlds_data_dir is not None:
         data_loader, num_batches = create_rlds_dataloader(
@@ -97,7 +111,7 @@ def main(config_name: str, max_frames: int | None = None):
         )
     else:
         data_loader, num_batches = create_torch_dataloader(
-            data_config, config.model.action_horizon, config.batch_size, config.model, config.num_workers, max_frames
+            data_config, config.model.action_horizon, config.batch_size, config.model, nw, max_frames
         )
 
     keys = ["state", "actions"]
@@ -120,6 +134,9 @@ def main(config_name: str, max_frames: int | None = None):
     output_path = config.assets_dirs / asset_id
     print(f"Writing stats to: {output_path}")
     normalize.save(output_path, norm_stats)
+
+    elapsed = time.perf_counter() - t0
+    print(f"Total time: {elapsed:.1f}s ({elapsed / 60:.1f} min)")
 
 
 if __name__ == "__main__":

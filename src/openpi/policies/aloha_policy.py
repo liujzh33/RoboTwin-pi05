@@ -146,7 +146,7 @@ class AlohaInputs(transforms.DataTransformFn):
             inputs["prompt"] = data["prompt"]
 
         # Preserve additional fields needed for subtask training
-        for key in ["instructions", "subtasks", "frame_idx", "phase_info", "high_prompt", "low_prompt"]:
+        for key in ["instructions", "subtasks", "frame_idx", "phase_info", "high_prompt", "low_prompt", "progress_label"]:
             if key in data:
                 inputs[key] = data[key]
 

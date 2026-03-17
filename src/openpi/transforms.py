@@ -500,6 +500,38 @@ class LoadSubtaskFromInstructions(DataTransformFn):
 
 
 @dataclasses.dataclass(frozen=True)
+class ComputeProgressLabel(DataTransformFn):
+    """
+    动态根据 frame_idx 和 phase_info.total_steps 生成进度标签 progress_label ∈ [0, 1]。
+    
+    不修改底层数据集，只在 dataloader 采样时附加一个标量标签，供模型的进度检测头训练使用。
+    """
+
+    def __call__(self, data: DataDict) -> DataDict:
+        if "frame_idx" not in data or "phase_info" not in data:
+            return data
+
+        frame_idx = data["frame_idx"]
+        if isinstance(frame_idx, np.ndarray):
+            frame_idx = int(frame_idx.item())
+        else:
+            frame_idx = int(frame_idx)
+
+        phase_info = data["phase_info"]
+        if isinstance(phase_info, str):
+            import json
+
+            phase_info = json.loads(phase_info)
+
+        total_steps = int(phase_info.get("total_steps", 0) or 0)
+        denom = max(1, total_steps - 1)
+        progress = np.asarray(frame_idx / float(denom), dtype=np.float32)
+
+        data["progress_label"] = progress
+        return data
+
+
+@dataclasses.dataclass(frozen=True)
 class PadStatesAndActions(DataTransformFn):
     """Zero-pads states and actions to the model action dimension."""
 

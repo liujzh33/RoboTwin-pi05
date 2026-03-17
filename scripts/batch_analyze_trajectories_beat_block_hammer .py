@@ -28,13 +28,27 @@ def find_episode_number(episode_path: Path) -> int | None:
     return None
 
 
-def find_raw_episode_path(episode_num: int) -> Path:
+def find_raw_episode_path(episode_num: int, processed_data_dir: Path = None) -> Path:
     """
-    根据 episode 编号构建原始 episode 文件路径
+    根据 episode 编号和 processed 目录名构建原始 episode 文件路径。
+    processed_data_dir 如 .../beat_block_hammer-aloha-agilex_clean_50-50，则用 dataset；
+    若含 recovery（如 beat_block_hammer-demo_clean-recovery-66），则用 dataset_recovery。
     """
+    if processed_data_dir is not None and "recovery" in processed_data_dir.name:
+        # e.g. beat_block_hammer-demo_clean-recovery-66 -> demo_clean
+        setting = "demo_clean"
+        if "demo_randomized" in processed_data_dir.name:
+            setting = "demo_randomized"
+        return Path(
+            "/mnt/data1/liujingzhi/dataset_recovery/beat_block_hammer/"
+            f"{setting}/data/episode{episode_num}.hdf5"
+        )
+    setting = "aloha-agilex_randomized_500"
+    if processed_data_dir is not None and "clean_50" in processed_data_dir.name:
+        setting = "aloha-agilex_clean_50"
     return Path(
         "/mnt/data1/liujingzhi/dataset/beat_block_hammer/"
-        f"aloha-agilex_randomized_500/data/episode{episode_num}.hdf5"
+        f"{setting}/data/episode{episode_num}.hdf5"
     )
 
 
@@ -79,9 +93,9 @@ def process_all_episodes(
     print()
     
     # 获取脚本路径
-    analyze_script = project_root / "scripts" / "analyze_trajectory.py"
+    analyze_script = project_root / "scripts" / "analyze_trajectory_beat_block_hammer .py"
     if not analyze_script.exists():
-        print(f"Error: analyze_trajectory.py not found at {analyze_script}")
+        print(f"Error: analyze_trajectory_beat_block_hammer .py not found at {analyze_script}")
         return
     
     success_count = 0
@@ -104,8 +118,8 @@ def process_all_episodes(
             fail_count += 1
             continue
         
-        # 查找原始 episode 文件
-        raw_episode_path = find_raw_episode_path(episode_num)
+        # 查找原始 episode 文件（根据 data_dir 区分 clean_50 / randomized_500）
+        raw_episode_path = find_raw_episode_path(episode_num, processed_data_dir)
         
         # 确定输出路径
         if output_dir:

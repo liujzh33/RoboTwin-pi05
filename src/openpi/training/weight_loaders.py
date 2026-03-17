@@ -55,6 +55,22 @@ class CheckpointWeightLoader(WeightLoader):
 
 
 @dataclasses.dataclass(frozen=True)
+class CheckpointWeightLoaderWithDefaults(WeightLoader):
+    """Loads weights from a checkpoint, filling ALL missing params from the current model.
+
+    用于模型结构有新增参数（例如 progress head）时，从旧 checkpoint 加载已有部分，
+    其余参数保持当前初始化（随机初始化）。
+    """
+
+    params_path: str
+
+    def load(self, params: at.Params) -> at.Params:
+        loaded_params = _model.restore_params(download.maybe_download(self.params_path), restore_type=np.ndarray)
+        # For any key missing in the checkpoint (e.g., new heads), keep the randomly initialized value in `params`.
+        return _merge_params(loaded_params, params, missing_regex=".*")
+
+
+@dataclasses.dataclass(frozen=True)
 class PaliGemmaWeightLoader(WeightLoader):
     """Loads weights from the official PaliGemma checkpoint.
 

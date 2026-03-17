@@ -21,7 +21,7 @@ from task_definitions.trajectory_analyzer import TrajectoryAnalyzer
 from task_definitions.beat_block_hammer import BeatBlockHammerProcessor
 
 
-def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: Path = None):
+def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: Path = None, error_attempt_range: tuple = None):
     """
     分析单个 episode 的轨迹特征
 
@@ -29,6 +29,8 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
         hdf5_path: processed HDF5 文件路径（episode_0.hdf5）
         save_path: 保存图片的路径（可选）
         raw_episode_path: 原始 episode 文件路径（可选，用于读取 endpose 数据）
+        error_attempt_range: (start_frame, end_frame) 可选，用于在 4 个子图上用淡红背景标出 error_attempt 段；
+            若为 None 且同目录存在 instructions.json 且含 phase_info.error_attempt_range，则自动读取
     """
     analyzer = TrajectoryAnalyzer()
     task_processor = BeatBlockHammerProcessor()
@@ -55,16 +57,13 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
             print("Warning: Cannot find qpos data")
             return
 
-        # 计算速度：根据活动臂选择左臂或右臂关节
-        if active_side == "left":
-            velocity = analyzer.compute_velocity(qpos, arm_indices=(0, 6))
-        else:
-            # 右臂关节位于 qpos[:, 7:13]
-            velocity = analyzer.compute_velocity(qpos, arm_indices=(7, 13))
+        # 双臂速度（与 blocks_ranking_size 一致）
+        vel_left = analyzer.compute_velocity(qpos, arm_indices=(0, 6))
+        vel_right = analyzer.compute_velocity(qpos, arm_indices=(7, 13))
+        velocity_max = np.maximum(vel_left, vel_right)
 
-        # 检测关键事件
         grasp_idx = analyzer.detect_grasp_event(left_gripper, right_gripper)
-        stop_points = analyzer.detect_stop_points(velocity)
+        stop_points = analyzer.detect_stop_points(velocity_max)
 
         # 获取总步数
         total_steps = len(left_gripper)
@@ -74,100 +73,128 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
         # 这样计算逻辑看到的数据就和画图看到的数据一模一样了！
         # ==========================================
         
-        # 1. 先尝试获取 Raw Z 数据（用于计算和可视化）
-        z_values = None
-        z_source = "N/A"
-        
-        # 自动推断 raw path (如果未提供参数)
+        # 真实双臂 Z + 真实双臂 EEF 位置（与 blocks_ranking_rgb_v1 一致：raw endpose 优先）
+        z_left = None
+        z_right = None
+        eef_xyz_left = None
+        eef_xyz_right = None
         if raw_episode_path is None:
-            if "episode_" in str(hdf5_path):
-                import re
-                match = re.search(r"episode_(\d+)", str(hdf5_path))
-                if match:
-                    episode_num = match.group(1)
-                    raw_episode_path = Path(
-                        "/mnt/data1/liujingzhi/dataset/beat_block_hammer/"
-                        f"aloha-agilex_randomized_500/data/episode{episode_num}.hdf5"
-                    )
-        
+            import re
+            match = re.search(r"episode_(\d+)", str(hdf5_path))
+            if match:
+                episode_num = match.group(1)
+                # 从 processed 路径推断 setting：如 .../beat_block_hammer-aloha-agilex_clean_50-50/episode_0/...
+                data_dir_name = hdf5_path.parent.parent.name  # e.g. beat_block_hammer-aloha-agilex_clean_50-50
+                if "clean_50" in data_dir_name:
+                    setting = "aloha-agilex_clean_50"
+                else:
+                    setting = "aloha-agilex_randomized_500"
+                raw_episode_path = Path(
+                    "/mnt/data1/liujingzhi/dataset/beat_block_hammer/"
+                    f"{setting}/data/episode{episode_num}.hdf5"
+                )
         if raw_episode_path and raw_episode_path.exists():
             with h5py.File(raw_episode_path, "r") as raw_f:
                 if "endpose/left_endpose" in raw_f and "endpose/right_endpose" in raw_f:
-                    # 读取 raw endpose
-                    left_endpose = raw_f["endpose/left_endpose"][()]
-                    right_endpose = raw_f["endpose/right_endpose"][()]
-                    
-                    # 根据活动侧选择对应末端 Z 轴
-                    if active_side == "left":
-                        z_raw = left_endpose[:, 2]
-                        z_source = "raw endpose/left_endpose[:,2]"
-                    else:
-                        z_raw = right_endpose[:, 2]
-                        z_source = "raw endpose/right_endpose[:,2]"
-                    
-                    # 对齐长度
-                    if len(z_raw) >= total_steps:
-                        z_values = z_raw[:total_steps]
-                    else:
-                        # 如果 raw 比 processed 短，使用 raw 的长度
-                        z_values = z_raw
-                        total_steps = len(z_values)
-                        # 同时截断其他数组以匹配
-                        left_gripper = left_gripper[:total_steps]
-                        right_gripper = right_gripper[:total_steps]
-                        velocity = velocity[:total_steps]
-                        stop_points = stop_points[:total_steps]
-                else:
-                    print("Warning: no endpose/left_endpose in raw file, fallback to qpos[:,2]")
-                    if qpos.shape[1] >= 3:
-                        z_values = qpos[:total_steps, 2]
-                        z_source = "processed qpos[:,2]"
-                    else:
-                        z_values = None
-                        z_source = "N/A"
-        else:
-            if raw_episode_path:
-                print(f"Warning: raw episode file not found: {raw_episode_path}")
-            # 如果没有 raw 文件，回退到使用 processed qpos
-            if qpos.shape[1] >= 3:
-                z_values = qpos[:total_steps, 2]
-                z_source = "processed qpos[:,2] (fallback)"
-            else:
-                z_values = None
-                z_source = "N/A"
+                    left_ep = raw_f["endpose/left_endpose"][()]
+                    right_ep = raw_f["endpose/right_endpose"][()]
+                    raw_len = min(len(left_ep), len(right_ep))
+                    z_left = left_ep[:raw_len, 2].copy()
+                    z_right = right_ep[:raw_len, 2].copy()
+                    eef_xyz_left = left_ep[:raw_len, :3].copy() if left_ep.shape[1] >= 3 else None
+                    eef_xyz_right = right_ep[:raw_len, :3].copy() if right_ep.shape[1] >= 3 else None
+                    # 对齐到 processed 长度，避免 plot 时 x/y 维度不一致（raw 与 processed 步数可能不同）
+                    if raw_len < total_steps:
+                        last_l = float(z_left[-1]) if len(z_left) > 0 else 0.0
+                        last_r = float(z_right[-1]) if len(z_right) > 0 else 0.0
+                        z_left = np.concatenate([z_left, np.full(total_steps - raw_len, last_l)])
+                        z_right = np.concatenate([z_right, np.full(total_steps - raw_len, last_r)])
+                        if eef_xyz_left is not None and eef_xyz_right is not None:
+                            eef_xyz_left = np.vstack([eef_xyz_left, np.tile(eef_xyz_left[-1], (total_steps - raw_len, 1))])
+                            eef_xyz_right = np.vstack([eef_xyz_right, np.tile(eef_xyz_right[-1], (total_steps - raw_len, 1))])
+                    elif raw_len > total_steps:
+                        z_left = z_left[:total_steps]
+                        z_right = z_right[:total_steps]
+                        if eef_xyz_left is not None and eef_xyz_right is not None:
+                            eef_xyz_left = eef_xyz_left[:total_steps]
+                            eef_xyz_right = eef_xyz_right[:total_steps]
+        if z_left is None and qpos.shape[1] >= 14:
+            z_left = qpos[:total_steps, 2]
+            z_right = qpos[:total_steps, 9]
 
-        # 2. 调用 get_phase_checkpoints，传入 external_z
-        # 这样计算逻辑看到的数据就和画图看到的数据一模一样了！
         checkpoints = task_processor.get_phase_checkpoints(
-            f, 
-            active_side=active_side, 
-            external_z=z_values  # <--- 关键修改：传入 Raw Z 数据
+            f,
+            active_side=active_side,
+            external_z=None,
+            external_eef_xyz=None,
+            external_z_left=z_left,
+            external_z_right=z_right,
+            external_eef_xyz_left=eef_xyz_left,
+            external_eef_xyz_right=eef_xyz_right,
         )
+
+    # 若未传入 error_attempt_range，尝试从同目录 instructions.json 的 phase_info 读取（recovery 数据）
+    # 同时读取 subtasks_per_frame，用于 recovery 时按标注绘制阶段而非重算整条轨迹
+    instr_data = None
+    instr_path = hdf5_path.parent / "instructions.json"
+    if instr_path.exists():
+        try:
+            import json
+            with open(instr_path, "r", encoding="utf-8") as fp:
+                instr_data = json.load(fp)
+            if error_attempt_range is None:
+                rng = (instr_data.get("phase_info") or {}).get("error_attempt_range")
+                if isinstance(rng, (list, tuple)) and len(rng) >= 2:
+                    error_attempt_range = (int(rng[0]), int(rng[1]))
+        except Exception:
+            instr_data = None
+
+    # 若存在 subtasks_per_frame 且长度一致，则用标注阶段绘图（recovery 数据）；否则用 processor 重算
+    use_annotated_phases = False
+    annotated_segments = []  # list of (start, end, phase_index); phase_index in 0..3 or -1 (masked)
+    if instr_data and (instr_data.get("subtasks_per_frame") or []) and len(instr_data["subtasks_per_frame"]) == total_steps:
+        base_descs = task_processor.get_subtask_descriptions()
+        spf = instr_data["subtasks_per_frame"]
+
+        def _phase_index_from_subtask(s):
+            s = (s or "").strip()
+            if not s or "[MASKED]" in s:
+                return -1
+            if " [Subtask] " in s:
+                s = s.split(" [Subtask] ")[-1].strip()
+            for i, d in enumerate(base_descs):
+                if d in s or s == d:
+                    return i
+            return -1
+
+        phase_indices = [_phase_index_from_subtask(spf[i]) for i in range(total_steps)]
+        # run-length encode into segments (start, end, phase_index)
+        if phase_indices:
+            start = 0
+            cur = phase_indices[0]
+            for i in range(1, total_steps + 1):
+                if i == total_steps or phase_indices[i] != cur:
+                    annotated_segments.append((start, i, cur))
+                    if i < total_steps:
+                        start = i
+                        cur = phase_indices[i]
+        use_annotated_phases = len(annotated_segments) > 0
 
     # 3) 创建可视化（4 行子图：gripper / velocity / Z / phases）
     fig, axes = plt.subplots(4, 1, figsize=(14, 12))
     time_steps = np.arange(total_steps)
 
+    # error_attempt 段淡红背景（在所有子图上，zorder=0 置于底层）
+    if error_attempt_range is not None:
+        err_start, err_end = error_attempt_range[0], error_attempt_range[1]
+        for ax in axes:
+            ax.axvspan(err_start, err_end + 1, color="red", alpha=0.15, zorder=0, label="Error attempt" if ax == axes[0] else None)
+
     # 子图1: 夹爪状态
     axes[0].plot(time_steps, left_gripper, "b-", label="Left Gripper", linewidth=2)
     axes[0].plot(time_steps, right_gripper, "g-", label="Right Gripper", linewidth=2)
-    axes[0].axhline(
-        y=analyzer.gripper_threshold,
-        color="k",
-        linestyle="--",
-        linewidth=1,
-        alpha=0.5,
-        label=f"Threshold ({analyzer.gripper_threshold})",
-    )
-
-    if grasp_idx is not None and grasp_idx < total_steps:
-        axes[0].axvline(
-            x=grasp_idx,
-            color="r",
-            linestyle="--",
-            linewidth=2,
-            label=f"Grasp Event (t={grasp_idx})",
-        )
+    axes[0].axhline(y=0.95, color="green", linestyle="--", alpha=0.5, label="Open (0.95)")
+    axes[0].axhline(y=0.05, color="red", linestyle="--", alpha=0.5, label="Closed (0.05)")
 
     axes[0].set_xlabel("Time Step", fontsize=12)
     axes[0].set_ylabel("Gripper Value", fontsize=12)
@@ -175,121 +202,98 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
 
-    # 子图2: 运动速度
-    axes[1].plot(time_steps, velocity, "b-", label="Joint Velocity", linewidth=2)
-    axes[1].axhline(
-        y=analyzer.velocity_threshold,
+    # 子图2: 双臂 Z 轴高度（真实 endpose，与 blocks_ranking_size 一致）
+    if z_left is None:
+        z_left = np.zeros(total_steps)
+        z_right = np.zeros(total_steps)
+    axes[1].plot(time_steps, z_left, "b-", label="Left Z (Height)", linewidth=1.5)
+    axes[1].plot(time_steps, z_right, "g-", label="Right Z (Height)", linewidth=1.5)
+    axes[1].set_ylabel("Height (Z)", fontsize=12)
+    axes[1].set_title("End-Effector Height", fontsize=14, fontweight="bold")
+    axes[1].legend(loc="upper right")
+    axes[1].grid(True, alpha=0.3)
+
+    # 子图3: 双臂速度 + Max（与 blocks_ranking_size 一致）
+    axes[2].plot(time_steps, vel_left, "b-", alpha=0.7, label="Left Arm Velocity")
+    axes[2].plot(time_steps, vel_right, "g-", alpha=0.7, label="Right Arm Velocity")
+    axes[2].plot(time_steps, velocity_max, "k-", alpha=0.4, linewidth=1, label="Max")
+    axes[2].axhline(
+        y=task_processor.velocity_break_threshold,
         color="gray",
         linestyle=":",
         linewidth=1,
         alpha=0.5,
-        label=f"Stop Threshold ({analyzer.velocity_threshold})",
+        label=f"Break threshold ({task_processor.velocity_break_threshold})",
     )
-
-    # 标记静止区域
-    stop_regions = np.where(stop_points)[0]
-    if len(stop_regions) > 0:
-        axes[1].fill_between(
+    if len(stop_points) > 0:
+        axes[2].fill_between(
             time_steps,
             0,
-            np.max(velocity),
+            np.max(velocity_max),
             where=stop_points,
             color="gray",
             alpha=0.05,
             label="Stopped",
         )
+    axes[2].set_xlabel("Time Step", fontsize=12)
+    axes[2].set_ylabel("Velocity", fontsize=12)
+    axes[2].set_title("Robot Movement Velocity", fontsize=14, fontweight="bold")
+    axes[2].legend(loc="upper right")
+    axes[2].grid(True, alpha=0.3)
 
-    if grasp_idx is not None and grasp_idx < total_steps:
-        axes[1].axvline(
-            x=grasp_idx,
-            color="r",
-            linestyle="--",
-            linewidth=2,
-            label=f"Grasp Event (t={grasp_idx})",
-        )
+    phase_colors = ["#ccffcc", "#ffffcc", "#ffcccc", "#ccccff"]
+    phase_labels = [
+        "P0: Above hammer",
+        "P1: Close to grasp",
+        "P2: Move above block",
+        "P3: Hit block",
+    ]
 
-    axes[1].set_xlabel("Time Step", fontsize=12)
-    axes[1].set_ylabel("Velocity Magnitude", fontsize=12)
-    axes[1].set_title("Arm Movement Velocity", fontsize=14, fontweight="bold")
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3)
-
-    # 子图3: 末端 Z 轴变化（来自原始 endpose）
-    if z_values is not None:
-        z_time = np.arange(z_values.shape[0])
-        axes[2].plot(
-            z_time,
-            z_values,
-            "m-",
-            label=f"Z ({z_source})",
-            linewidth=2,
-        )
-        if grasp_idx is not None and grasp_idx < z_values.shape[0]:
-            axes[2].axvline(
-                x=grasp_idx,
-                color="r",
-                linestyle="--",
-                linewidth=1,
-                label=f"Grasp Event (t={grasp_idx})",
-            )
-        axes[2].set_ylabel("Z", fontsize=12)
-        axes[2].set_title("End-Effector Z Trajectory", fontsize=14, fontweight="bold")
-        axes[2].legend()
-        axes[2].grid(True, alpha=0.3)
+    if use_annotated_phases:
+        # 使用 v3 标注的 subtasks_per_frame：前 3 个子图只在实际阶段边界画竖线（不含 error 段内）
+        for seg_start, seg_end, pidx in annotated_segments:
+            if pidx >= 0 and seg_start > 0:
+                for ax in axes[:3]:
+                    ax.axvline(x=seg_start, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
+        # 子图4：按标注段绘制，error 段显示为“已屏蔽”色块，不标 P0–P3
+        axes[3].set_xlim(0, total_steps)
+        axes[3].set_ylim(0, 1)
+        axes[3].set_yticks([])
+        axes[3].set_xlabel("Time Step", fontsize=12)
+        axes[3].set_title("Predicted Phases (from recovery annotation)", fontsize=14, fontweight="bold")
+        axes[3].grid(True, alpha=0.3)
+        for seg_start, seg_end, pidx in annotated_segments:
+            axes[3].axvspan(seg_start, seg_end, alpha=0.5, color=phase_colors[pidx] if pidx >= 0 else "#ffcccc")
+            axes[3].axvline(x=seg_start, color="k", linestyle="-", linewidth=1)
+            mid = (seg_start + seg_end) / 2
+            if pidx >= 0:
+                label = phase_labels[pidx] if pidx < len(phase_labels) else f"P{pidx}"
+            else:
+                label = "Error (masked)"
+            axes[3].text(mid, 0.5, label, ha="center", va="center", fontsize=10, fontweight="bold")
     else:
-        axes[2].text(
-            0.5,
-            0.5,
-            "No Z data available",
-            ha="center",
-            va="center",
-            transform=axes[2].transAxes,
-        )
-        axes[2].set_title(
-            "End-Effector Z Trajectory (missing)", fontsize=14, fontweight="bold"
-        )
-        axes[2].set_axis_off()
-
-    # 子图4: 阶段划分建议（使用 checkpoints）
-    axes[3].set_xlim(0, total_steps)
-    axes[3].set_ylim(-0.5, 0.5)
-    axes[3].set_xlabel("Time Step", fontsize=12)
-    axes[3].set_title("Suggested Phase Boundaries", fontsize=14, fontweight="bold")
-    axes[3].grid(True, alpha=0.3)
-
-    suggested_checkpoints = list(checkpoints)
-    if len(suggested_checkpoints) > 0:
-        colors = ["orange", "red", "purple", "blue", "brown"]
-        labels = ["Boundary 0", "Boundary 1", "Boundary 2", "Boundary 3", "Boundary 4"]
-
-        for i, cp in enumerate(suggested_checkpoints):
-            if cp >= total_steps:
-                continue
-            color = colors[i % len(colors)]
-            label = labels[i] if i < len(labels) else f"Boundary {i}"
-            axes[3].axvline(
-                x=cp,
-                color=color,
-                linestyle="-",
-                linewidth=2,
-                label=f"{label} (t={cp})",
-            )
-
-        # 标记阶段区域
-        phases = [0] + [cp for cp in suggested_checkpoints if cp < total_steps] + [
-            total_steps
-        ]
-        phase_colors = ["green", "yellow", "orange", "red", "blue"]
+        # 原有逻辑：用 processor 整条轨迹算出的 checkpoints
+        for cp in checkpoints:
+            for ax in axes[:3]:
+                ax.axvline(x=cp, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
+        axes[3].set_xlim(0, total_steps)
+        axes[3].set_ylim(0, 1)
+        axes[3].set_yticks([])
+        axes[3].set_xlabel("Time Step", fontsize=12)
+        axes[3].set_title(f"Predicted Phases (Total: {len(checkpoints)+1})", fontsize=14, fontweight="bold")
+        axes[3].grid(True, alpha=0.3)
+        phases = [0] + [cp for cp in checkpoints if cp < total_steps] + [total_steps]
         for i in range(len(phases) - 1):
             axes[3].axvspan(
                 phases[i],
                 phases[i + 1],
-                alpha=0.2,
+                alpha=0.5,
                 color=phase_colors[i % len(phase_colors)],
-                label=f"Phase {i}",
             )
-
-    axes[3].legend(loc="upper right")
+            axes[3].axvline(x=phases[i], color="k", linestyle="-", linewidth=1)
+            mid = (phases[i] + phases[i + 1]) / 2
+            label = phase_labels[i] if i < len(phase_labels) else f"Phase {i}"
+            axes[3].text(mid, 0.5, label, ha="center", va="center", fontsize=10, fontweight="bold")
 
     plt.suptitle(f"Trajectory Analysis: {hdf5_path.name}", fontsize=16, fontweight="bold")
     plt.tight_layout()
@@ -306,12 +310,11 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
     print("\n=== Trajectory Analysis Summary ===")
     print(f"Total steps (processed): {total_steps}")
     print(f"Grasp event: {grasp_idx if grasp_idx is not None else 'Not detected'}")
-    print(f"Suggested checkpoints: {suggested_checkpoints}")
-    print(f"Number of phases: {len(suggested_checkpoints) + 1}")
-    print(f"Average velocity: {np.mean(velocity):.4f}")
-    print(f"Max velocity: {np.max(velocity):.4f}")
+    print(f"Checkpoints (T1,T2,T3): {checkpoints}")
+    print(f"Number of phases: {len(checkpoints) + 1}")
+    print(f"Average velocity (max): {np.mean(velocity_max):.4f}")
+    print(f"Max velocity: {np.max(velocity_max):.4f}")
     print(f"Stop points: {np.sum(stop_points)} ({100*np.sum(stop_points)/total_steps:.1f}%)")
-    print(f"Z source: {z_source}")
 
 
 def main():

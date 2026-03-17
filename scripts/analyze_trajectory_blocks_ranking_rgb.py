@@ -19,12 +19,12 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from task_definitions.trajectory_analyzer import TrajectoryAnalyzer
-# 导入我们刚更新的处理器
-from task_definitions.blocks_ranking_rgb import BlocksRankingRgbProcessor
+# 使用 v1 版处理器（带精细阶段划分）
+from task_definitions.blocks_ranking_rgb_v1 import BlocksRankingRgbV1Processor
 
 def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: Path = None):
     analyzer = TrajectoryAnalyzer()
-    task_processor = BlocksRankingRgbProcessor()
+    task_processor = BlocksRankingRgbV1Processor()
 
     print(f"Analyzing: {hdf5_path.name}")
 
@@ -51,26 +51,36 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
         z_left = None
         z_right = None
         
-        # 自动推断 raw path
+        # 自动推断 raw path（根据 data_dir 区分 clean_50 / randomized_500）
         if raw_episode_path is None:
             match = re.search(r"episode_(\d+)", str(hdf5_path.name))
             if match:
                 episode_num = match.group(1)
-                # 修改这里的路径指向 blocks_ranking_rgb 的原始数据
+                data_dir_name = hdf5_path.parent.parent.name
+                setting = "aloha-agilex_clean_50" if "clean_50" in data_dir_name else "aloha-agilex_randomized_500"
                 raw_episode_path = Path(
                     "/mnt/data1/liujingzhi/dataset/blocks_ranking_rgb/"
-                    f"aloha-agilex_randomized_500/data/episode{episode_num}.hdf5"
+                    f"{setting}/data/episode{episode_num}.hdf5"
                 )
         
         if raw_episode_path and raw_episode_path.exists():
             print(f"Loading Raw Z from: {raw_episode_path}")
             with h5py.File(raw_episode_path, "r") as raw_f:
                 if "endpose/left_endpose" in raw_f:
-                    z_left = raw_f["endpose/left_endpose"][()][:, 2]
-                    z_right = raw_f["endpose/right_endpose"][()][:, 2]
-                    # 截断或填充
-                    z_left = z_left[:total_steps]
-                    z_right = z_right[:total_steps]
+                    left_ep = raw_f["endpose/left_endpose"][()]
+                    right_ep = raw_f["endpose/right_endpose"][()]
+                    raw_len = min(len(left_ep), len(right_ep))
+                    z_left = np.asarray(left_ep[:raw_len, 2], dtype=float)
+                    z_right = np.asarray(right_ep[:raw_len, 2], dtype=float)
+                    # 对齐到 processed 长度，避免 plot 时 x/y 维度不一致
+                    if raw_len < total_steps:
+                        last_l = float(z_left[-1]) if len(z_left) > 0 else 0.0
+                        last_r = float(z_right[-1]) if len(z_right) > 0 else 0.0
+                        z_left = np.concatenate([z_left, np.full(total_steps - raw_len, last_l)])
+                        z_right = np.concatenate([z_right, np.full(total_steps - raw_len, last_r)])
+                    elif raw_len > total_steps:
+                        z_left = z_left[:total_steps]
+                        z_right = z_right[:total_steps]
         else:
             print(f"Warning: Raw file not found at {raw_episode_path}, plotting qpos approximations.")
             # Fallback: qpos idx 2 (left lift) and idx 9 (right lift)
@@ -78,8 +88,8 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
                 z_left = qpos[:total_steps, 2]
                 z_right = qpos[:total_steps, 9]
 
-        # 2. 计算 Checkpoints
-        # 这里 active_side 不影响 BlocksRanking 逻辑，传 None 即可
+        # 2. 计算 Checkpoints（传入 velocity 对齐所需的信息）
+        # 这里 active_side 对 v1 影响不大，传 None 即可
         checkpoints = task_processor.get_phase_checkpoints(f)
 
     # 3) 可视化 (4行)
@@ -109,6 +119,7 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
     axes[2].set_ylabel("Velocity")
     axes[2].set_title("Robot Movement Velocity", fontweight="bold")
     axes[2].grid(True, alpha=0.3)
+    axes[2].legend(loc="upper right")
 
     # Subplot 4: 阶段划分
     axes[3].set_xlim(0, total_steps)
@@ -139,6 +150,11 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
         else: short_desc = f"P{i}"
             
         axes[3].text(mid, 0.5, short_desc, ha="center", va="center", fontsize=10, rotation=0, fontweight="bold")
+
+    # 在前三个子图上绘制垂直红线以标记 checkpoints
+    for cp in checkpoints:
+        for ax in axes[:3]:
+            ax.axvline(x=cp, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
 
     plt.tight_layout()
     

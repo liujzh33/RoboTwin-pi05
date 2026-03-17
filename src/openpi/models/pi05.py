@@ -125,6 +125,11 @@ class Pi05(_model.BaseModel):
         self.time_mlp_out = nnx.Linear(action_expert_config.width, action_expert_config.width, rngs=rngs)
         self.action_out_proj = nnx.Linear(action_expert_config.width, config.action_dim, rngs=rngs)
 
+        # Progress estimation head: uses pooled PaliGemma prefix features.
+        hidden_dim = paligemma_config.width
+        self.progress_mlp_in = nnx.Linear(hidden_dim, hidden_dim, rngs=rngs)
+        self.progress_mlp_out = nnx.Linear(hidden_dim, 1, rngs=rngs)
+
         # This attribute gets automatically set by model.train() and model.eval().
         self.deterministic = True
 
@@ -328,7 +333,33 @@ class Pi05(_model.BaseModel):
         # Calculate flow loss
         flow_loss = jnp.mean(jnp.square(v_t - u_t), axis=-1)
 
-        return subtask_generation_loss + jnp.mean(flow_loss, axis=-1)
+        # Progress estimation loss (trained on clean multi-task data).
+        # prefix_out: [batch, seq_len, hidden_dim]
+        pooled_prefix = jnp.mean(prefix_out, axis=1)
+        h = self.progress_mlp_in(pooled_prefix)
+        h = nnx.swish(h)
+        progress_logits = self.progress_mlp_out(h)[..., 0]
+        pred_progress = jax.nn.sigmoid(progress_logits)
+
+        progress_label = observation.progress_label
+        if progress_label is not None:
+            if isinstance(progress_label, np.ndarray):
+                progress_label = jnp.asarray(progress_label)
+            progress_label = progress_label.reshape(pred_progress.shape)
+            progress_loss = jnp.mean(jnp.square(pred_progress - progress_label))
+            # from jax import debug as jax_debug
+            # jax_debug.print(
+            #     "progress_step: loss={pl:.4f}, label_mean={lm:.3f}, pred_mean={pm:.3f}",
+            #     pl=progress_loss,
+            #     lm=jnp.mean(progress_label),
+            #     pm=jnp.mean(pred_progress),
+            # )
+        else:
+            progress_loss = 0.0
+        
+      
+
+        return subtask_generation_loss + jnp.mean(flow_loss, axis=-1) +  progress_loss
 
     @override
     def sample_low_level_task(
