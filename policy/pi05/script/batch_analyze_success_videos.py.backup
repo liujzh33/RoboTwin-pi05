@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""
+批量分析多个任务的成功视频帧数分布
+
+用法:
+    python script/batch_analyze_success_videos.py
+"""
+
+import os
+import subprocess
+import sys
+import json
+from pathlib import Path
+
+# 任务列表：eval_dir路径和对应的任务名称
+TASKS = [
+    {
+        "eval_dir": "/data2/liangxiwen/zkd/cry/RoboTwin/eval_result/open_laptop/pi05/demo_clean/pi05_ft_4a100/2026-01-25 22:26:10",
+        "task_name": "open_laptop"
+    },
+    {
+        "eval_dir": "/data2/liangxiwen/zkd/cry/RoboTwin/eval_result/move_stapler_pad/pi05/demo_clean/pi05_ft_4a100/2026-01-25 22:26:24",
+        "task_name": "move_stapler_pad"
+    },
+]
+
+
+def analyze_task(eval_dir, task_name, task_lim_dir=None):
+    """分析单个任务的视频帧数分布"""
+    print(f"\n{'='*80}")
+    print(f"Analyzing task: {task_name}")
+    print(f"Eval dir: {eval_dir}")
+    print(f"{'='*80}")
+    
+    # 检查目录是否存在
+    if not os.path.exists(eval_dir):
+        print(f"\033[91mError: Directory not found: {eval_dir}\033[0m")
+        return False
+    
+    # 检查视频文件（可能在eval_dir下或eval_dir/video下）
+    video_dir = os.path.join(eval_dir, "video")
+    if not os.path.exists(video_dir):
+        video_dir = eval_dir  # 如果video子目录不存在，视频可能在eval_dir根目录下
+    
+    # 检查是否有视频文件
+    import glob
+    video_files = glob.glob(os.path.join(video_dir, "episode*.mp4"))
+    if len(video_files) == 0:
+        print(f"\033[91mError: No video files found in {video_dir}\033[0m")
+        return False
+    
+    # 运行分析脚本
+    script_path = os.path.join(os.path.dirname(__file__), "analyze_success_videos.py")
+    cmd = [
+        sys.executable,
+        script_path,
+        "--eval_dir", eval_dir,
+        "--task_name", task_name,
+    ]
+    
+    # 如果指定了task_lim_dir，添加到命令中
+    if task_lim_dir:
+        cmd.extend(["--task_lim_dir", task_lim_dir])
+    
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=False)
+        print(f"\033[92m✓ Successfully analyzed {task_name}\033[0m")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"\033[91m✗ Failed to analyze {task_name}: {e}\033[0m")
+        return False
+    except Exception as e:
+        print(f"\033[91m✗ Error analyzing {task_name}: {e}\033[0m")
+        return False
+
+
+def main():
+    """批量分析所有任务"""
+    print("\n" + "="*80)
+    print("Batch Analysis of Success Videos")
+    print("="*80)
+    
+    # 创建统一的任务阈值目录
+    task_lim_dir = "/data2/liangxiwen/zkd/cry/RoboTwin/task_lim"
+    os.makedirs(task_lim_dir, exist_ok=True)
+    print(f"\nTask threshold directory: {task_lim_dir}")
+    
+    results = []
+    for task in TASKS:
+        success = analyze_task(task["eval_dir"], task["task_name"], task_lim_dir=task_lim_dir)
+        results.append({
+            "task_name": task["task_name"],
+            "eval_dir": task["eval_dir"],
+            "success": success
+        })
+    
+    # 打印总结
+    print("\n" + "="*80)
+    print("Summary")
+    print("="*80)
+    
+    successful = [r for r in results if r["success"]]
+    failed = [r for r in results if not r["success"]]
+    
+    print(f"\n\033[92mSuccessful: {len(successful)}/{len(results)}\033[0m")
+    for r in successful:
+        print(f"  ✓ {r['task_name']}")
+    
+    if failed:
+        print(f"\n\033[91mFailed: {len(failed)}/{len(results)}\033[0m")
+        for r in failed:
+            print(f"  ✗ {r['task_name']}: {r['eval_dir']}")
+    
+    # 检查生成的统计文件
+    print("\n" + "="*80)
+    print("Generated Statistics Files")
+    print("="*80)
+    
+    print("\n1. Original statistics files (in eval directories):")
+    for task in TASKS:
+        stats_file = os.path.join(task["eval_dir"], "success_video_stats.json")
+        if os.path.exists(stats_file):
+            print(f"  \033[92m✓ {task['task_name']}: {stats_file}\033[0m")
+        else:
+            print(f"  \033[93m⚠ {task['task_name']}: {stats_file} (not found)\033[0m")
+    
+    print(f"\n2. Unified threshold files (in {task_lim_dir}):")
+    for task in TASKS:
+        threshold_file = os.path.join(task_lim_dir, f"{task['task_name']}.json")
+        if os.path.exists(threshold_file):
+            # 读取并显示阈值信息
+            try:
+                with open(threshold_file, 'r') as f:
+                    data = json.load(f)
+                    thresholds = data.get('thresholds', {})
+                    print(f"  \033[92m✓ {task['task_name']}: {threshold_file}\033[0m")
+                    print(f"      Max: {thresholds.get('max', 'N/A')}, P99: {thresholds.get('p99', 'N/A')}, "
+                          f"P95: {thresholds.get('p95', 'N/A')}, P90: {thresholds.get('p90', 'N/A')}, "
+                          f"Mean: {thresholds.get('mean', 'N/A')}")
+            except Exception as e:
+                print(f"  \033[93m⚠ {task['task_name']}: {threshold_file} (error reading: {e})\033[0m")
+        else:
+            print(f"  \033[93m⚠ {task['task_name']}: {threshold_file} (not found)\033[0m")
+    
+    print("\n" + "="*80)
+    print("Analysis Complete!")
+    print(f"All task thresholds are saved in: {task_lim_dir}")
+    print("="*80)
+
+
+if __name__ == "__main__":
+    main()
+
