@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
 import re
+import json
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -75,8 +76,61 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
 
         checkpoints = task_processor.get_phase_checkpoints(f)
 
+    # 可选：读取 recovery 标注信息
+    instr_data = None
+    error_attempt_range = None
+    instr_path = hdf5_path.parent / "instructions.json"
+    if instr_path.exists():
+        try:
+            with open(instr_path, "r", encoding="utf-8") as fp:
+                instr_data = json.load(fp)
+            rng = (instr_data.get("phase_info") or {}).get("error_attempt_range")
+            if isinstance(rng, (list, tuple)) and len(rng) >= 2:
+                error_attempt_range = (int(rng[0]), int(rng[1]))
+        except Exception:
+            instr_data = None
+
+    use_annotated_phases = False
+    annotated_segments = []
+    if (
+        instr_data
+        and isinstance(instr_data.get("subtasks_per_frame"), list)
+        and len(instr_data["subtasks_per_frame"]) == total_steps
+    ):
+        spf = instr_data["subtasks_per_frame"]
+        base_descs = task_processor.get_subtask_descriptions()
+
+        def _phase_idx_from_subtask(s):
+            s = (s or "").strip()
+            if not s or "[MASKED]" in s:
+                return -1
+            if " [Subtask] " in s:
+                s = s.split(" [Subtask] ")[-1].strip()
+            for i, d in enumerate(base_descs):
+                if d in s or s == d:
+                    return i
+            return -1
+
+        phase_indices = [_phase_idx_from_subtask(x) for x in spf]
+        if phase_indices:
+            start = 0
+            cur = phase_indices[0]
+            for i in range(1, total_steps + 1):
+                if i == total_steps or phase_indices[i] != cur:
+                    annotated_segments.append((start, i, cur))
+                    if i < total_steps:
+                        start = i
+                        cur = phase_indices[i]
+            use_annotated_phases = len(annotated_segments) > 0
+
     fig, axes = plt.subplots(4, 1, figsize=(14, 14))
     time_steps = np.arange(total_steps)
+
+    # 给 error_attempt 段上背景
+    if error_attempt_range is not None:
+        err_s, err_e = error_attempt_range
+        for ax in axes:
+            ax.axvspan(err_s, err_e + 1, color="red", alpha=0.12, zorder=0)
 
     # Subplot 1: 夹爪（v1 阈值 0.95 / 0.05）
     axes[0].plot(time_steps, left_gripper, "b-", label="Left Gripper", alpha=0.8)
@@ -105,63 +159,75 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
     axes[2].legend(loc="upper right")
     axes[2].grid(True, alpha=0.3)
 
-    # 前三个子图绘制 checkpoint 红线
-    for cp in checkpoints:
-        for ax in axes[:3]:
-            ax.axvline(x=cp, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
+    # 前三个子图绘制 checkpoint 红线（或标注段边界）
+    if use_annotated_phases:
+        for seg_start, _, pidx in annotated_segments:
+            if pidx >= 0 and seg_start > 0:
+                for ax in axes[:3]:
+                    ax.axvline(x=seg_start, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
+    else:
+        for cp in checkpoints:
+            for ax in axes[:3]:
+                ax.axvline(x=cp, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
 
     axes[3].set_xlim(0, total_steps)
     axes[3].set_ylim(0, 1)
     axes[3].set_yticks([])
     axes[3].set_title(
-        f"Predicted Phases (Total: {len(checkpoints)+1}) [small→far right, medium→middle, large→far left]",
+        "Predicted Phases (from recovery annotation)"
+        if use_annotated_phases
+        else f"Predicted Phases (Total: {len(checkpoints)+1}) [small→far right, medium→middle, large→far left]",
         fontweight="bold",
     )
 
-    phases = [0] + checkpoints + [total_steps]
     colors = ["#ffcccc", "#ccffcc", "#ccccff", "#ffffcc", "#ffccff", "#ccffff", "#f0e68c"]
+    if use_annotated_phases:
+        for seg_start, seg_end, pidx in annotated_segments:
+            axes[3].axvspan(seg_start, seg_end, color=colors[pidx % len(colors)] if pidx >= 0 else "#ffcccc", alpha=0.5)
+            axes[3].axvline(x=seg_start, color="k", linestyle="-", linewidth=1)
+            mid = (seg_start + seg_end) / 2
+            label = f"P{pidx}" if pidx >= 0 else "Error (masked)"
+            axes[3].text(mid, 0.5, label, ha="center", va="center", fontsize=9, rotation=0, fontweight="bold")
+    else:
+        phases = [0] + checkpoints + [total_steps]
+        descriptions = task_processor.get_subtask_descriptions_for_phases(len(phases) - 1)
+        for i in range(len(phases) - 1):
+            start, end = phases[i], phases[i + 1]
+            mid = (start + end) / 2
+            color = colors[i % len(colors)]
+            axes[3].axvspan(start, end, color=color, alpha=0.5)
+            axes[3].axvline(x=start, color="k", linestyle="-", linewidth=1)
 
-    descriptions = task_processor.get_subtask_descriptions_for_phases(len(phases) - 1)
-
-    for i in range(len(phases) - 1):
-        start, end = phases[i], phases[i + 1]
-        mid = (start + end) / 2
-        color = colors[i % len(colors)]
-
-        axes[3].axvspan(start, end, color=color, alpha=0.5)
-        axes[3].axvline(x=start, color="k", linestyle="-", linewidth=1)
-
-        desc_text = descriptions[i] if i < len(descriptions) else f"Phase {i}"
-        if "above" in desc_text and "small" in desc_text:
-            short_desc = f"P{i}: Above small"
-        elif "Close" in desc_text and "small" in desc_text:
-            short_desc = f"P{i}: Grasp small"
-        elif "far right" in desc_text:
-            short_desc = f"P{i}: Move small"
-        elif "Open" in desc_text and "small" in desc_text:
-            short_desc = f"P{i}: Release small"
-        elif "above" in desc_text and "medium" in desc_text:
-            short_desc = f"P{i}: Above medium"
-        elif "Close" in desc_text and "medium" in desc_text:
-            short_desc = f"P{i}: Grasp medium"
-        elif "middle" in desc_text:
-            short_desc = f"P{i}: Move medium"
-        elif "Open" in desc_text and "medium" in desc_text:
-            short_desc = f"P{i}: Release medium"
-        elif "above" in desc_text and "large" in desc_text:
-            short_desc = f"P{i}: Above large"
-        elif "Close" in desc_text and "large" in desc_text:
-            short_desc = f"P{i}: Grasp large"
-        elif "far left" in desc_text:
-            short_desc = f"P{i}: Move large"
-        elif "Open" in desc_text and "large" in desc_text:
-            short_desc = f"P{i}: Release large"
-        elif "Return" in desc_text or "neutral" in desc_text:
-            short_desc = f"P{i}: Return"
-        else:
-            short_desc = f"P{i}"
-
-        axes[3].text(mid, 0.5, short_desc, ha="center", va="center", fontsize=9, rotation=0, fontweight="bold")
+            desc_text = descriptions[i] if i < len(descriptions) else f"Phase {i}"
+            if "above" in desc_text and "small" in desc_text:
+                short_desc = f"P{i}: Above small"
+            elif "Close" in desc_text and "small" in desc_text:
+                short_desc = f"P{i}: Grasp small"
+            elif "far right" in desc_text:
+                short_desc = f"P{i}: Move small"
+            elif "Open" in desc_text and "small" in desc_text:
+                short_desc = f"P{i}: Release small"
+            elif "above" in desc_text and "medium" in desc_text:
+                short_desc = f"P{i}: Above medium"
+            elif "Close" in desc_text and "medium" in desc_text:
+                short_desc = f"P{i}: Grasp medium"
+            elif "middle" in desc_text:
+                short_desc = f"P{i}: Move medium"
+            elif "Open" in desc_text and "medium" in desc_text:
+                short_desc = f"P{i}: Release medium"
+            elif "above" in desc_text and "large" in desc_text:
+                short_desc = f"P{i}: Above large"
+            elif "Close" in desc_text and "large" in desc_text:
+                short_desc = f"P{i}: Grasp large"
+            elif "far left" in desc_text:
+                short_desc = f"P{i}: Move large"
+            elif "Open" in desc_text and "large" in desc_text:
+                short_desc = f"P{i}: Release large"
+            elif "Return" in desc_text or "neutral" in desc_text:
+                short_desc = f"P{i}: Return"
+            else:
+                short_desc = f"P{i}"
+            axes[3].text(mid, 0.5, short_desc, ha="center", va="center", fontsize=9, rotation=0, fontweight="bold")
 
     plt.tight_layout()
 

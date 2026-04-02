@@ -89,6 +89,11 @@ class DataConfig:
     # If true, will use the LeRobot dataset task to define the prompt.
     prompt_from_task: bool = False
 
+    # Recovery training option:
+    # If true, drop samples that fall into the "[MASKED] Error Attempt Phase" prefix by re-sampling.
+    # This keeps the training distribution aligned with test-time usage (only train on correction+normal frames).
+    drop_masked_recovery_frames: bool = False
+
     # Only used for RLDS data loader (ie currently only used for DROID).
     rlds_data_dir: str | None = None
     # Action space for DROID dataset.
@@ -129,7 +134,7 @@ class ModelTransformFactory(GroupFactory):
                         _transforms.InjectDefaultPrompt(self.default_prompt),
                         _transforms.ResizeImages(224, 224),
                         # Load instructions and subtasks from data, combine into high_prompt and low_prompt
-                        _transforms.LoadSubtaskFromInstructions(use_first_instruction=True),
+                        _transforms.LoadSubtaskFromInstructions(use_first_instruction=False),
                         # Tokenize high-level and low-level prompts together with proper loss mask
                         _transforms.TokenizeHighLowPrompt(
                             _tokenizer.PaligemmaTokenizer(model_config.max_token_len),
@@ -504,11 +509,11 @@ class TrainConfig:
     num_train_steps: int = 30_000
 
     # How often (in steps) to log training metrics.
-    log_interval: int = 100
+    log_interval: int = 300
     # How often (in steps) to save checkpoints.
-    save_interval: int = 1000
+    save_interval: int = 3000
     # If set, any existing checkpoints matching step % keep_period == 0 will not be deleted.
-    keep_period: int | None = 5000
+    keep_period: int | None = 6000
 
     # If true, will overwrite the checkpoint directory if it already exists.
     overwrite: bool = False
@@ -675,6 +680,41 @@ _CONFIGS = [
         fsdp_devices=2,
         num_workers=8,
     ),
+    # pi05_base multi-task recovery (3 tasks): beat_block_hammer + blocks_ranking_rgb + blocks_ranking_size
+    # 数据需要预先生成到 LeRobot repo_id="pi05_multi_task_recovery_3"
+    TrainConfig(
+        name="pi05_aloha_full_base_multi_task_recovery_3",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="pi05_multi_task_recovery_3",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                })
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+                # Drop "[MASKED] Error Attempt" prefix frames so we train on recovery + normal segments.
+                drop_masked_recovery_frames=True,
+            ),
+        ),
+        # 从已训好的子任务+progress 模型起步（含 progress_mlp_*，与 Pi0.5(pi05=True) 结构一致）。
+        weight_loader=weight_loaders.CheckpointWeightLoaderWithDefaults("/mnt/data/linbingqian/openpi/checkpoints11/pi05_base/params"),
+        num_train_steps=50001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
+    ),
     # pi05_base multi-task 5 任务 v1.0：10 个数据集（5 任务 × clean_50 + randomized_500），带子任务+语言丰富化
     # 数据在 training_data/pi05_multi_task_5_v1.0，generate.sh 生成 repo_id=pi05_multi_task_5_v1.0
     # 从 multi5_v1_exp/16000 作为基础权重继续训练
@@ -703,6 +743,188 @@ _CONFIGS = [
             ),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("/mnt/data1/liujingzhi/RoboTwin/policy/pi05/checkpoints/pi05_aloha_full_base_multi_task_5_v1_0/multi5_v1_exp/16000/params"),
+        num_train_steps=50001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
+    ),
+    # pi05_base multi-task 5 任务 v1.0 + progress estimator head
+    TrainConfig(
+        name="pi05_aloha_full_base_multi_task_5_v1_0_progress",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="pi05_multi_task_5_v1.0",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                }),
+                # 动态生成 progress_label，不改底层数据
+                _transforms.ComputeProgressLabel(),
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+            ),
+        ),
+        # 从 multi5_v1_exp/50001 的 checkpoint 加载初始权重；
+        # 使用 CheckpointWeightLoaderWithDefaults 保留所有新增参数的随机初始化（如 progress head）。
+        weight_loader=weight_loaders.CheckpointWeightLoaderWithDefaults(
+            "/mnt/data1/liujingzhi/RoboTwin/policy/pi05/checkpoints/"
+            "pi05_aloha_full_base_multi_task_5_v1_0/multi5_v1_exp/50001/params"
+        ),
+        num_train_steps=50001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
+    ),
+    # 同上数据集 pi05_multi_task_5_v1.0（干净 5 任务），但从 pi05_base 起步训练子任务 + 进度头（progress 用 WithDefaults 随机初始化）
+    TrainConfig(
+        name="pi05_aloha_multi_task_5_v1_0_subtask_progress_from_pi05_base",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="pi05_multi_task_5_v1.0",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                }),
+                _transforms.ComputeProgressLabel(),
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoaderWithDefaults(
+            "/mnt/data/linbingqian/openpi/checkpoints11/pi05_base/params"
+        ),
+        num_train_steps=50001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
+    ),
+    # beat_block_hammer recovery fine-tuning (drop masked error-attempt prefix frames)
+    TrainConfig(
+        name="pi05_aloha_beat_block_hammer_recovery_from15000",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="beat_block_hammer_recovery_pi05",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                }),
+                _transforms.ComputeProgressLabel(),
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+                drop_masked_recovery_frames=True,
+            ),
+        ),
+        # Continue training from the progress model checkpoint at step 15000.
+        weight_loader=weight_loaders.CheckpointWeightLoaderWithDefaults(
+            "/mnt/data1/liujingzhi/RoboTwin/policy/pi05/checkpoints/"
+            "pi05_aloha_full_base_multi_task_5_v1_0_progress/progress_exp_1/15000/params"
+        ),
+        num_train_steps=50001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
+    ),
+    # beat_block_hammer: 干净轨迹 + 错误恢复轨迹混合（同一 LeRobot repo）
+    # - 干净 episode：无 [MASKED]，drop_masked 不丢帧；ComputeProgressLabel 中 start_idx=0 → progress≈frame/(T-1)
+    # - 恢复 episode：丢 [MASKED] 前缀；recovery 段 [Correction]+[Subtask] 走 LoadSubtaskFromInstructions；progress 从 masked_end 重算
+    TrainConfig(
+        name="pi05_aloha_beat_block_hammer_mixed_recovery",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="beat_block_hammer_mixed_pi05",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                }),
+                _transforms.ComputeProgressLabel(),
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+                drop_masked_recovery_frames=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoaderWithDefaults(
+            "/mnt/data1/liujingzhi/RoboTwin/policy/pi05/checkpoints/"
+            "pi05_aloha_full_base_multi_task_5_v1_0_progress/progress_exp_1/15000/params"
+        ),
+        num_train_steps=50001,
+        batch_size=64,
+        fsdp_devices=2,
+        num_workers=8,
+    ),
+    # 同上：beat_block_hammer 干净 + recovery 混合（repo beat_block_hammer_mixed_pi05），但从 pi05_base 起步（progress 头等缺失权重随机初始化）
+    TrainConfig(
+        name="pi05_aloha_beat_block_hammer_mixed_recovery_from_pi05_base",
+        model=pi0_config.Pi0Config(pi05=True),
+        data=LeRobotAlohaDataConfig(
+            repo_id="beat_block_hammer_mixed_pi05",
+            repack_transforms=_transforms.Group(inputs=[
+                _transforms.RepackTransform({
+                    "images": {
+                        "cam_high": "observation.images.cam_high",
+                        "cam_left_wrist": "observation.images.cam_left_wrist",
+                        "cam_right_wrist": "observation.images.cam_right_wrist",
+                    },
+                    "state": "observation.state",
+                    "actions": "action",
+                    "instructions": "instructions",
+                    "subtasks": "subtasks",
+                    "frame_idx": "frame_idx",
+                    "phase_info": "phase_info",
+                }),
+                _transforms.ComputeProgressLabel(),
+            ]),
+            base_config=DataConfig(
+                prompt_from_task=False,
+                drop_masked_recovery_frames=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoaderWithDefaults(
+            "/mnt/data/linbingqian/openpi/checkpoints11/pi05_base/params"
+        ),
         num_train_steps=50001,
         batch_size=64,
         fsdp_devices=2,

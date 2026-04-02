@@ -488,15 +488,106 @@ class LoadSubtaskFromInstructions(DataTransformFn):
         if isinstance(subtasks[idx], list) and len(subtasks[idx]) > 0:
             # Clamp phase_idx to valid range
             phase_idx = min(phase_idx, len(subtasks[idx]) - 1)
-            low_prompt = subtasks[idx][phase_idx]  # Use phase-specific subtask
+            low_prompt_raw = subtasks[idx][phase_idx]  # Use phase-specific subtask
         else:
             raise ValueError(f"subtasks[{idx}] must be a non-empty list")
+
+        # Recovery-aware prompt parsing.
+        # - For "[MASKED] ..." phases: keep low_prompt_raw as-is (typically filtered out at dataloader level).
+        # - For "[Correction] ... [Subtask] ..." phases:
+        #     high_prompt := "{instruction} {correction_text}"
+        #     low_prompt  := "{subtask_text}"
+        # - For normal phases: low_prompt := "{subtask_text}" (no tags)
+        low_prompt = low_prompt_raw
+        if isinstance(low_prompt_raw, str):
+            s = low_prompt_raw.strip()
+            if "[Correction]" in s and "[Subtask]" in s:
+                # Split only on the first "[Subtask]" to be robust.
+                before, after = s.split("[Subtask]", 1)
+                correction_text = before.replace("[Correction]", "").strip()
+                subtask_text = after.strip()
+                # Put correction into the high-level prompt (conditioning), and subtask into low-level prompt (supervised).
+                high_prompt = f"{high_prompt} {correction_text}".strip()
+                low_prompt = subtask_text
+            else:
+                # Strip any residual tags (if any).
+                low_prompt = (
+                    s.replace("[Subtask]", "")
+                    .replace("[Correction]", "")
+                    .replace("[MASKED]", "")
+                    .strip()
+                )
 
         return {
             **{k: v for k, v in data.items() if k not in ["instructions", "subtasks"]},
             "high_prompt": high_prompt,
             "low_prompt": low_prompt,
         }
+
+
+@dataclasses.dataclass(frozen=True)
+class ComputeProgressLabel(DataTransformFn):
+    """
+    动态根据 frame_idx 和 phase_info.total_steps 生成进度标签 progress_label ∈ [0, 1]。
+    
+    不修改底层数据集，只在 dataloader 采样时附加一个标量标签，供模型的进度检测头训练使用。
+    """
+
+    def __call__(self, data: DataDict) -> DataDict:
+        if "frame_idx" not in data or "phase_info" not in data:
+            return data
+
+        frame_idx = data["frame_idx"]
+        if isinstance(frame_idx, np.ndarray):
+            frame_idx = int(frame_idx.item())
+        else:
+            frame_idx = int(frame_idx)
+
+        phase_info = data["phase_info"]
+        if isinstance(phase_info, str):
+            import json
+            phase_info = json.loads(phase_info)
+
+        total_steps = int(phase_info.get("total_steps", 0) or 0)
+
+        # Recovery progress re-normalization:
+        # If this episode encodes a "[MASKED]" phase and provides checkpoints,
+        # treat the end of the masked phase as the recovery start (i.e., masked_end).
+        start_idx = 0
+        checkpoints = phase_info.get("checkpoints", []) if isinstance(phase_info, dict) else []
+        try:
+            if "subtasks" in data:
+                import json as _json
+                st = data["subtasks"]
+                if isinstance(st, str):
+                    st = _json.loads(st)
+                if isinstance(st, list) and len(st) > 0 and isinstance(checkpoints, list):
+                    # Find earliest masked_end across all instruction variants.
+                    masked_ends: list[int] = []
+                    for variant in st:
+                        if not (isinstance(variant, list) and len(variant) > 0):
+                            continue
+                        masked_phase_idx = None
+                        for i, s in enumerate(variant):
+                            if isinstance(s, str) and "[MASKED]" in s:
+                                masked_phase_idx = i
+                                break
+                        if masked_phase_idx is None:
+                            continue
+                        masked_end = int(checkpoints[masked_phase_idx]) if masked_phase_idx < len(checkpoints) else total_steps
+                        masked_ends.append(masked_end)
+                    if masked_ends:
+                        start_idx = min(masked_ends)
+        except Exception:
+            # Fall back to the vanilla progress definition.
+            start_idx = 0
+
+        denom = max(1, (total_steps - 1) - start_idx)
+        numer = max(0, frame_idx - start_idx)
+        progress = np.asarray(numer / float(denom), dtype=np.float32)
+
+        data["progress_label"] = progress
+        return data
 
 
 @dataclasses.dataclass(frozen=True)

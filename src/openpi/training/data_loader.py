@@ -62,6 +62,104 @@ class TransformedDataset(Dataset[T_co]):
         return len(self._dataset)
 
 
+class _MaskedRecoveryFilteredTransformedDataset(Dataset[T_co]):
+    """
+    Dataset wrapper that *drops* masked error-attempt frames by re-sampling indices.
+
+    Why here (instead of a transform):
+    - Transforms are pure functions and cannot re-sample.
+    - Collation always stacks; it cannot skip None items.
+    """
+
+    def __init__(
+        self,
+        dataset: Dataset,
+        repack_transforms: Sequence[_transforms.DataTransformFn],
+        post_repack_transforms: Sequence[_transforms.DataTransformFn],
+        *,
+        max_resample_tries: int = 50,
+    ):
+        self._dataset = dataset
+        self._repack = _transforms.compose(repack_transforms)
+        self._post = _transforms.compose(post_repack_transforms)
+        self._max_resample_tries = max_resample_tries
+
+    def __len__(self) -> int:
+        return len(self._dataset)
+
+    @staticmethod
+    def _should_drop_masked(data: dict) -> bool:
+        import json
+
+        if "frame_idx" not in data or "phase_info" not in data or "subtasks" not in data:
+            return False
+
+        # Parse frame_idx
+        frame_idx = data["frame_idx"]
+        if isinstance(frame_idx, np.ndarray):
+            frame_idx = int(frame_idx.item())
+        else:
+            frame_idx = int(frame_idx)
+
+        # Parse phase_info for checkpoints
+        phase_info = data["phase_info"]
+        if isinstance(phase_info, str):
+            phase_info = json.loads(phase_info)
+        checkpoints = phase_info.get("checkpoints", []) if isinstance(phase_info, dict) else []
+        if not isinstance(checkpoints, list) or len(checkpoints) == 0:
+            return False
+
+        # Detect "recovery" episodes by the masked tag in the first phase subtask.
+        subtasks = data["subtasks"]
+        if isinstance(subtasks, str):
+            subtasks = json.loads(subtasks)
+        try:
+            if not (isinstance(subtasks, list) and len(subtasks) > 0):
+                return False
+
+            total_steps = int(phase_info.get("total_steps", 0) or 0) if isinstance(phase_info, dict) else 0
+
+            # Find the earliest masked_end across all instruction variants.
+            masked_ends: list[int] = []
+            for variant in subtasks:
+                if not (isinstance(variant, list) and len(variant) > 0):
+                    continue
+                masked_phase_idx = None
+                for i, s in enumerate(variant):
+                    if isinstance(s, str) and "[MASKED]" in s:
+                        masked_phase_idx = i
+                        break
+                if masked_phase_idx is None:
+                    continue
+                masked_end = int(checkpoints[masked_phase_idx]) if masked_phase_idx < len(checkpoints) else total_steps
+                masked_ends.append(masked_end)
+
+            if not masked_ends:
+                return False
+
+            masked_end = min(masked_ends)
+            return frame_idx < masked_end
+        except Exception:
+            return False
+
+    def __getitem__(self, index: SupportsIndex) -> T_co:
+        idx0 = index.__index__()
+        rng = np.random.default_rng(idx0)
+
+        last = None
+        for attempt in range(self._max_resample_tries):
+            chosen = idx0 if attempt == 0 else int(rng.integers(0, len(self._dataset)))
+            raw = self._dataset[chosen]
+            repacked = self._repack(raw)
+            last = repacked
+            if not self._should_drop_masked(repacked):
+                return typing.cast(T_co, self._post(repacked))
+
+        # If we cannot find a valid sample (unexpected), fall back to the last sampled one.
+        assert last is not None
+        return typing.cast(T_co, self._post(last))
+
+
 class IterableTransformedDataset(IterableDataset[T_co]):
     def __init__(
         self,
@@ -201,7 +299,7 @@ def transform_dataset(
             )
         norm_stats = data_config.norm_stats
 
-    transforms = list(data_config.repack_transforms.inputs)
+    repack_transforms = list(data_config.repack_transforms.inputs)
     
     # Add FrameStack transform after repack if multi-frame stacking is enabled
     if model_config is not None:
@@ -217,15 +315,22 @@ def transform_dataset(
                         break
             
             if image_keys:
-                transforms.append(_transforms.FrameStack(n_obs_steps=n_obs_steps, image_keys=image_keys))
+                repack_transforms.append(_transforms.FrameStack(n_obs_steps=n_obs_steps, image_keys=image_keys))
     
-    transforms.extend([
+    post_repack_transforms: list[_transforms.DataTransformFn] = [
         *data_config.data_transforms.inputs,
         _transforms.Normalize(norm_stats, use_quantiles=data_config.use_quantile_norm),
         *data_config.model_transforms.inputs,
-    ])
+    ]
 
-    return TransformedDataset(dataset, transforms)
+    if getattr(data_config, "drop_masked_recovery_frames", False):
+        return _MaskedRecoveryFilteredTransformedDataset(
+            dataset,
+            repack_transforms=repack_transforms,
+            post_repack_transforms=post_repack_transforms,
+        )
+
+    return TransformedDataset(dataset, [*repack_transforms, *post_repack_transforms])
 
 
 def transform_iterable_dataset(

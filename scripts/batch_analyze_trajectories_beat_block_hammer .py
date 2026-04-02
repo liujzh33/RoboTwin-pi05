@@ -31,8 +31,18 @@ def find_episode_number(episode_path: Path) -> int | None:
 def find_raw_episode_path(episode_num: int, processed_data_dir: Path = None) -> Path:
     """
     根据 episode 编号和 processed 目录名构建原始 episode 文件路径。
-    processed_data_dir 如 .../beat_block_hammer-aloha-agilex_clean_50-50，则用 aloha-agilex_clean_50。
+    processed_data_dir 如 .../beat_block_hammer-aloha-agilex_clean_50-50，则用 dataset；
+    若含 recovery（如 beat_block_hammer-demo_clean-recovery-66），则用 dataset_recovery。
     """
+    if processed_data_dir is not None and "recovery" in processed_data_dir.name:
+        # e.g. beat_block_hammer-demo_clean-recovery-66 -> demo_clean
+        setting = "demo_clean"
+        if "demo_randomized" in processed_data_dir.name:
+            setting = "demo_randomized"
+        return Path(
+            "/mnt/data1/liujingzhi/dataset_recovery/beat_block_hammer/"
+            f"{setting}/data/episode{episode_num}.hdf5"
+        )
     setting = "aloha-agilex_randomized_500"
     if processed_data_dir is not None and "clean_50" in processed_data_dir.name:
         setting = "aloha-agilex_clean_50"

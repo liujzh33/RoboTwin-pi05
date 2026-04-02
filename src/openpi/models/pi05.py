@@ -125,6 +125,11 @@ class Pi05(_model.BaseModel):
         self.time_mlp_out = nnx.Linear(action_expert_config.width, action_expert_config.width, rngs=rngs)
         self.action_out_proj = nnx.Linear(action_expert_config.width, config.action_dim, rngs=rngs)
 
+        # Progress estimation head: uses pooled PaliGemma prefix features.
+        hidden_dim = paligemma_config.width
+        self.progress_mlp_in = nnx.Linear(hidden_dim, hidden_dim, rngs=rngs)
+        self.progress_mlp_out = nnx.Linear(hidden_dim, 1, rngs=rngs)
+
         # This attribute gets automatically set by model.train() and model.eval().
         self.deterministic = True
 
@@ -328,7 +333,33 @@ class Pi05(_model.BaseModel):
         # Calculate flow loss
         flow_loss = jnp.mean(jnp.square(v_t - u_t), axis=-1)
 
-        return subtask_generation_loss + jnp.mean(flow_loss, axis=-1)
+        # Progress estimation loss (trained on clean multi-task data).
+        # prefix_out: [batch, seq_len, hidden_dim]
+        pooled_prefix = jnp.mean(prefix_out, axis=1)
+        h = self.progress_mlp_in(pooled_prefix)
+        h = nnx.swish(h)
+        progress_logits = self.progress_mlp_out(h)[..., 0]
+        pred_progress = jax.nn.sigmoid(progress_logits)
+
+        progress_label = observation.progress_label
+        if progress_label is not None:
+            if isinstance(progress_label, np.ndarray):
+                progress_label = jnp.asarray(progress_label)
+            progress_label = progress_label.reshape(pred_progress.shape)
+            progress_loss = jnp.mean(jnp.square(pred_progress - progress_label))
+            # from jax import debug as jax_debug
+            # jax_debug.print(
+            #     "progress_step: loss={pl:.4f}, label_mean={lm:.3f}, pred_mean={pm:.3f}",
+            #     pl=progress_loss,
+            #     lm=jnp.mean(progress_label),
+            #     pm=jnp.mean(pred_progress),
+            # )
+        else:
+            progress_loss = 0.0
+        
+      
+
+        return subtask_generation_loss + jnp.mean(flow_loss, axis=-1) +  progress_loss
 
     @override
     def sample_low_level_task(
@@ -456,6 +487,29 @@ class Pi05(_model.BaseModel):
         
         return output_tokens, kv_cache, mask, ar_mask
 
+    def predict_progress(
+        self,
+        rng: at.KeyArrayLike,
+        observation: _model.Observation,
+    ) -> at.Float[at.Array, " b"]:
+        """Predict progress ∈ [0, 1] from current observation (no action generation)."""
+        observation = _model.preprocess_observation(None, observation, train=False)
+        prefix_token_embeddings, prefix_mask, prefix_ar_mask = self.embed_prefix(observation)
+        prefix_attn_mask = make_attn_mask(prefix_mask, prefix_ar_mask)
+        prefix_positions = jnp.cumsum(prefix_mask, axis=1) - 1
+        (prefix_out, _), _ = self.PaliGemma.llm(
+            [prefix_token_embeddings, None],
+            mask=prefix_attn_mask,
+            positions=prefix_positions,
+            adarms_cond=[None, None],
+            kv_cache=None,
+        )
+        pooled = jnp.mean(prefix_out, axis=1)
+        h = self.progress_mlp_in(pooled)
+        h = nnx.swish(h)
+        logits = self.progress_mlp_out(h)[..., 0]
+        return jax.nn.sigmoid(logits)
+
     @override
     def sample_actions(
         self,
@@ -484,30 +538,23 @@ class Pi05(_model.BaseModel):
             suffix_tokens, suffix_mask, suffix_ar_mask, adarms_cond = self.embed_suffix(
                 observation, x_t, jnp.broadcast_to(time, batch_size)
             )
-            # `suffix_attn_mask` is shape (b, suffix_len, suffix_len) indicating how the suffix tokens can attend to each
-            # other
             suffix_attn_mask = make_attn_mask(suffix_mask, suffix_ar_mask)
-            # `prefix_attn_mask` is shape (b, suffix_len, prefix_len) indicating how the suffix tokens can attend to the
-            # prefix tokens
             prefix_attn_mask = einops.repeat(prefix_mask, "b p -> b s p", s=suffix_tokens.shape[1])
-            # `combined_mask` is shape (b, suffix_len, prefix_len + suffix_len) indicating how the suffix tokens (which
-            # generate the queries) can attend to the full prefix + suffix sequence (which generates the keys and values)
             full_attn_mask = jnp.concatenate([prefix_attn_mask, suffix_attn_mask], axis=-1)
-            query_attn_mask = full_attn_mask[:, -suffix_tokens.shape[1]:, :]  # [B, suffix_len, prefix_len + suffix_len]
-            
+            query_attn_mask = full_attn_mask[:, -suffix_tokens.shape[1]:, :]
+
             assert query_attn_mask.shape == (
                 batch_size,
                 suffix_tokens.shape[1],
                 prefix_mask.shape[1] + suffix_tokens.shape[1],
             )
-            # `positions` is shape (b, suffix_len) indicating the positions of the suffix tokens
             positions = jnp.sum(prefix_mask, axis=-1)[:, None] + jnp.cumsum(suffix_mask, axis=-1) - 1
 
             (prefix_out, suffix_out), _ = self.PaliGemma.llm(
                 [None, suffix_tokens],
                 mask=query_attn_mask,
                 positions=positions,
-                kv_cache=kv_cache,  # kv_cache is not updated during multiple denoising steps
+                kv_cache=kv_cache,
                 adarms_cond=[None, adarms_cond],
             )
             assert prefix_out is None
@@ -517,7 +564,6 @@ class Pi05(_model.BaseModel):
 
         def cond(carry):
             x_t, time = carry
-            # robust to floating-point error
             return time >= -dt / 2
 
         x_0, _ = jax.lax.while_loop(cond, step, (noise, 1.0))

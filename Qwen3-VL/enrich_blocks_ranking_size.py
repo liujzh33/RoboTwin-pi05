@@ -7,6 +7,7 @@ import os
 import json
 import glob
 import random
+from pathlib import Path
 from tqdm import tqdm
 
 # ================= 配置区域 =================
@@ -178,6 +179,53 @@ FALLBACK_VARIANTS = [
     "Proceed to the next phase.",
 ]
 
+CORRECTION_VARIANTS = {
+    "grasp_position_offset": [
+        "[Correction] Open the gripper, adjust XY position, and retry grasping.",
+        "[Correction] Release, correct XY alignment, and try to grasp again.",
+        "[Correction] Open the fingers, shift XY position, and regrasp.",
+        "[Correction] Unclasp, realign in the XY plane, and attempt grasp.",
+        "[Correction] Open gripper, fix XY offset, and grasp once more.",
+    ],
+    "grasp_orientation_mismatch": [
+        "[Correction] Open the gripper, adjust wrist rotation, and retry grasping.",
+        "[Correction] Release, fix wrist angle, and try to grasp again.",
+        "[Correction] Open the fingers, correct orientation, and regrasp.",
+        "[Correction] Unclasp, rotate the wrist to align, and attempt grasp.",
+        "[Correction] Open gripper, tune the rotation, and grasp once more.",
+    ],
+    "premature_close": [
+        "[Correction] Open the gripper, move down to the target, and close it.",
+        "[Correction] Release, descend to the correct height, and grasp.",
+        "[Correction] Open the fingers, lower to the object, and close.",
+        "[Correction] Unclasp, move further down, and secure the grip.",
+        "[Correction] Open gripper, drop to the target level, and shut it.",
+    ],
+    "grasp_slip": [
+        "[Correction] Track the dropped object, return to it, and regrasp.",
+        "[Correction] Locate the fallen object, move back, and grab it.",
+        "[Correction] Find the dropped item, go to it, and secure grip.",
+        "[Correction] Trace the slipped object, approach it, and regrasp.",
+        "[Correction] Track the item, return to its position, and grasp again.",
+    ],
+}
+
+BASE_PHASE_DESCS = {
+    "Move the gripper above the small block.": 0,
+    "Close the gripper to grasp the small block.": 1,
+    "Move the gripper to the far right target position while holding the small block.": 2,
+    "Open the gripper to release the small block.": 3,
+    "Move the gripper above the medium block.": 4,
+    "Close the gripper to grasp the medium block.": 5,
+    "Move the gripper to the middle target position while holding the medium block.": 6,
+    "Open the gripper to release the medium block.": 7,
+    "Move the gripper above the large block.": 8,
+    "Close the gripper to grasp the large block.": 9,
+    "Move the gripper to the far left target position while holding the large block.": 10,
+    "Open the gripper to release the large block.": 11,
+    "Return to a neutral position.": 12,
+}
+
 
 def main(data_root=None):
     root = (data_root or DATA_ROOT).rstrip("/")
@@ -208,26 +256,82 @@ def main(data_root=None):
                 instructions = ["Sort the blocks by size: small on the right, medium in the middle, large on the left."]
                 data["instructions"] = instructions
 
-            # 用 phase_info 或已有 subtasks 确定阶段数
-            phase_info = data.get("phase_info", {})
-            num_phases = phase_info.get("num_phases")
-            if num_phases is None and data.get("subtasks"):
-                num_phases = len(data["subtasks"][0])
-            if num_phases is None:
-                num_phases = 13
+            phase_info = data.get("phase_info", {}) or {}
+            subtasks = data.get("subtasks") or []
 
-            new_subtasks_list = []
+            if not subtasks:
+                num_phases = phase_info.get("num_phases")
+                if num_phases is None:
+                    num_phases = 13
+                new_subtasks_list = []
+                for _ in range(len(instructions)):
+                    variant = []
+                    for phase_idx in range(num_phases):
+                        if phase_idx in PHASE_VARIANTS:
+                            variant.append(random.choice(PHASE_VARIANTS[phase_idx]))
+                        else:
+                            variant.append(random.choice(FALLBACK_VARIANTS))
+                    new_subtasks_list.append(variant)
+                data["subtasks"] = new_subtasks_list
+            else:
+                ep_name = os.path.basename(ep_dir)
+                try:
+                    ep_idx = int(ep_name.split("_")[1])
+                except Exception:
+                    ep_idx = -1
 
-            for _ in range(len(instructions)):
-                variant = []
-                for phase_idx in range(num_phases):
-                    if phase_idx in PHASE_VARIANTS:
-                        variant.append(random.choice(PHASE_VARIANTS[phase_idx]))
-                    else:
-                        variant.append(random.choice(FALLBACK_VARIANTS))
-                new_subtasks_list.append(variant)
+                error_type = ""
+                meta_dir = Path(root) / "metadata"
+                if ep_idx >= 0 and meta_dir.exists():
+                    meta_path = meta_dir / f"episode{ep_idx}_metadata.json"
+                    if meta_path.exists():
+                        try:
+                            with open(meta_path, "r", encoding="utf-8") as mf:
+                                meta = json.load(mf)
+                            summary = meta.get("episode_summary") or {}
+                            etypes = summary.get("error_types") or []
+                            if etypes:
+                                error_type = etypes[0]
+                        except Exception:
+                            error_type = ""
 
-            data["subtasks"] = new_subtasks_list
+                def _infer_phase_idx(text: str):
+                    s = (text or "").strip()
+                    if not s or "[MASKED]" in s:
+                        return None
+                    if " [Subtask] " in s:
+                        s = s.split(" [Subtask] ")[-1].strip()
+                    for base_desc, idx_phase in BASE_PHASE_DESCS.items():
+                        if base_desc in s or s == base_desc:
+                            return idx_phase
+                    return None
+
+                new_subtasks_list = []
+                for phases in subtasks:
+                    variant_phases = []
+                    for phase_text in phases:
+                        txt = phase_text or ""
+                        if "[MASKED]" in txt:
+                            variant_phases.append(txt)
+                            continue
+
+                        phase_idx = _infer_phase_idx(txt)
+                        if phase_idx is None:
+                            variant_phases.append(txt)
+                            continue
+
+                        subtask_variant = random.choice(
+                            PHASE_VARIANTS.get(phase_idx, FALLBACK_VARIANTS)
+                        )
+                        if "[Correction]" in txt and error_type in CORRECTION_VARIANTS:
+                            corr_variant = random.choice(CORRECTION_VARIANTS[error_type])
+                            enriched = f"{corr_variant} [Subtask] {subtask_variant}"
+                        else:
+                            enriched = subtask_variant
+                        variant_phases.append(enriched)
+                    new_subtasks_list.append(variant_phases)
+
+                data["subtasks"] = new_subtasks_list
 
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)

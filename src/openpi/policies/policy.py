@@ -60,10 +60,17 @@ class Policy(BasePolicy):
             self._model = self._model.to(pytorch_device)
             self._model.eval()
             self._sample_actions = model.sample_actions
+            self._predict_progress = getattr(model, "predict_progress", None)
         else:
             # JAX model setup
             self._sample_actions = nnx_utils.module_jit(model.sample_actions)
             self._rng = rng or jax.random.key(0)
+            # Keep a separate RNG stream for progress probing so monitoring does not alter action sampling.
+            self._progress_rng = jax.random.key(1)
+            if hasattr(model, "predict_progress"):
+                self._predict_progress = nnx_utils.module_jit(model.predict_progress)
+            else:
+                self._predict_progress = None
         
         # Initialize observation history queues for multi-frame stacking
         # Check if model has n_obs_steps config (for pi0/pi05 models)
@@ -234,6 +241,27 @@ class Policy(BasePolicy):
             "infer_ms": model_time * 1000,
         }
         return outputs
+
+    def get_progress(self, obs: dict) -> float | None:
+        """Predict progress ∈ [0,1] from raw observation dict. Returns None if model has no progress head."""
+        if self._predict_progress is None:
+            return None
+
+        # Keep behavior consistent with infer(): transforms may mutate inputs in-place.
+        # Always copy first to avoid corrupting caller-side observation buffers.
+        inputs = jax.tree.map(lambda x: x, obs)
+        inputs = self._input_transform(inputs)
+        if self._is_pytorch_model:
+            inputs = jax.tree.map(lambda x: torch.from_numpy(np.array(x)).to(self._pytorch_device)[None, ...], inputs)
+            observation = _model.Observation.from_dict(inputs)
+            p = self._predict_progress(self._pytorch_device, observation)
+            return float(np.asarray(p[0].detach().cpu()))
+        else:
+            inputs = jax.tree.map(lambda x: np.asarray(x)[None, ...], inputs)
+            observation = _model.Observation.from_dict(inputs)
+            self._progress_rng, progress_rng = jax.random.split(self._progress_rng)
+            p = self._predict_progress(progress_rng, observation)
+            return float(np.asarray(p[0]))
 
     @property
     def metadata(self) -> dict[str, Any]:

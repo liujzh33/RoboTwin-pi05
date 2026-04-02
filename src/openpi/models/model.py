@@ -106,6 +106,9 @@ class Observation(Generic[ArrayT]):
     # Token loss mask (for FAST autoregressive model).
     token_loss_mask: at.Bool[ArrayT, "*b l"] | None = None
 
+    # Optional scalar progress label per sample (for progress estimator head).
+    progress_label: at.Float[ArrayT, "*b"] | None = None
+
     @classmethod
     def from_dict(cls, data: at.PyTree[ArrayT]) -> "Observation[ArrayT]":
         """This method defines the mapping between unstructured data (i.e., nested dict) to the structured Observation format."""
@@ -153,6 +156,7 @@ class Observation(Generic[ArrayT]):
             tokenized_prompt_mask=tokenized_prompt_mask,
             token_ar_mask=token_ar_mask,
             token_loss_mask=token_loss_mask,
+            progress_label=data.get("progress_label"),
         )
 
     def to_dict(self) -> at.PyTree[ArrayT]:
@@ -261,6 +265,7 @@ def preprocess_observation(
         tokenized_prompt_mask=observation.tokenized_prompt_mask,
         token_ar_mask=observation.token_ar_mask,
         token_loss_mask=observation.token_loss_mask,
+        progress_label=observation.progress_label,
     )
 
 

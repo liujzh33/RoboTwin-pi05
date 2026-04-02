@@ -21,7 +21,7 @@ from task_definitions.trajectory_analyzer import TrajectoryAnalyzer
 from task_definitions.beat_block_hammer import BeatBlockHammerProcessor
 
 
-def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: Path = None):
+def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: Path = None, error_attempt_range: tuple = None):
     """
     分析单个 episode 的轨迹特征
 
@@ -29,6 +29,8 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
         hdf5_path: processed HDF5 文件路径（episode_0.hdf5）
         save_path: 保存图片的路径（可选）
         raw_episode_path: 原始 episode 文件路径（可选，用于读取 endpose 数据）
+        error_attempt_range: (start_frame, end_frame) 可选，用于在 4 个子图上用淡红背景标出 error_attempt 段；
+            若为 None 且同目录存在 instructions.json 且含 phase_info.error_attempt_range，则自动读取
     """
     analyzer = TrajectoryAnalyzer()
     task_processor = BeatBlockHammerProcessor()
@@ -131,9 +133,62 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
             external_eef_xyz_right=eef_xyz_right,
         )
 
+    # 若未传入 error_attempt_range，尝试从同目录 instructions.json 的 phase_info 读取（recovery 数据）
+    # 同时读取 subtasks_per_frame，用于 recovery 时按标注绘制阶段而非重算整条轨迹
+    instr_data = None
+    instr_path = hdf5_path.parent / "instructions.json"
+    if instr_path.exists():
+        try:
+            import json
+            with open(instr_path, "r", encoding="utf-8") as fp:
+                instr_data = json.load(fp)
+            if error_attempt_range is None:
+                rng = (instr_data.get("phase_info") or {}).get("error_attempt_range")
+                if isinstance(rng, (list, tuple)) and len(rng) >= 2:
+                    error_attempt_range = (int(rng[0]), int(rng[1]))
+        except Exception:
+            instr_data = None
+
+    # 若存在 subtasks_per_frame 且长度一致，则用标注阶段绘图（recovery 数据）；否则用 processor 重算
+    use_annotated_phases = False
+    annotated_segments = []  # list of (start, end, phase_index); phase_index in 0..3 or -1 (masked)
+    if instr_data and (instr_data.get("subtasks_per_frame") or []) and len(instr_data["subtasks_per_frame"]) == total_steps:
+        base_descs = task_processor.get_subtask_descriptions()
+        spf = instr_data["subtasks_per_frame"]
+
+        def _phase_index_from_subtask(s):
+            s = (s or "").strip()
+            if not s or "[MASKED]" in s:
+                return -1
+            if " [Subtask] " in s:
+                s = s.split(" [Subtask] ")[-1].strip()
+            for i, d in enumerate(base_descs):
+                if d in s or s == d:
+                    return i
+            return -1
+
+        phase_indices = [_phase_index_from_subtask(spf[i]) for i in range(total_steps)]
+        # run-length encode into segments (start, end, phase_index)
+        if phase_indices:
+            start = 0
+            cur = phase_indices[0]
+            for i in range(1, total_steps + 1):
+                if i == total_steps or phase_indices[i] != cur:
+                    annotated_segments.append((start, i, cur))
+                    if i < total_steps:
+                        start = i
+                        cur = phase_indices[i]
+        use_annotated_phases = len(annotated_segments) > 0
+
     # 3) 创建可视化（4 行子图：gripper / velocity / Z / phases）
     fig, axes = plt.subplots(4, 1, figsize=(14, 12))
     time_steps = np.arange(total_steps)
+
+    # error_attempt 段淡红背景（在所有子图上，zorder=0 置于底层）
+    if error_attempt_range is not None:
+        err_start, err_end = error_attempt_range[0], error_attempt_range[1]
+        for ax in axes:
+            ax.axvspan(err_start, err_end + 1, color="red", alpha=0.15, zorder=0, label="Error attempt" if ax == axes[0] else None)
 
     # 子图1: 夹爪状态
     axes[0].plot(time_steps, left_gripper, "b-", label="Left Gripper", linewidth=2)
@@ -186,19 +241,6 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
     axes[2].legend(loc="upper right")
     axes[2].grid(True, alpha=0.3)
 
-    for cp in checkpoints:
-        for ax in axes[:3]:
-            ax.axvline(x=cp, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
-
-    # 子图4: 4 阶段划分（T1/T2/T3 红线已在上面子图绘制）
-    axes[3].set_xlim(0, total_steps)
-    axes[3].set_ylim(0, 1)
-    axes[3].set_yticks([])
-    axes[3].set_xlabel("Time Step", fontsize=12)
-    axes[3].set_title(f"Predicted Phases (Total: {len(checkpoints)+1})", fontsize=14, fontweight="bold")
-    axes[3].grid(True, alpha=0.3)
-
-    phases = [0] + [cp for cp in checkpoints if cp < total_steps] + [total_steps]
     phase_colors = ["#ccffcc", "#ffffcc", "#ffcccc", "#ccccff"]
     phase_labels = [
         "P0: Above hammer",
@@ -206,17 +248,52 @@ def analyze_episode(hdf5_path: Path, save_path: Path = None, raw_episode_path: P
         "P2: Move above block",
         "P3: Hit block",
     ]
-    for i in range(len(phases) - 1):
-        axes[3].axvspan(
-            phases[i],
-            phases[i + 1],
-            alpha=0.5,
-            color=phase_colors[i % len(phase_colors)],
-        )
-        axes[3].axvline(x=phases[i], color="k", linestyle="-", linewidth=1)
-        mid = (phases[i] + phases[i + 1]) / 2
-        label = phase_labels[i] if i < len(phase_labels) else f"Phase {i}"
-        axes[3].text(mid, 0.5, label, ha="center", va="center", fontsize=10, fontweight="bold")
+
+    if use_annotated_phases:
+        # 使用 v3 标注的 subtasks_per_frame：前 3 个子图只在实际阶段边界画竖线（不含 error 段内）
+        for seg_start, seg_end, pidx in annotated_segments:
+            if pidx >= 0 and seg_start > 0:
+                for ax in axes[:3]:
+                    ax.axvline(x=seg_start, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
+        # 子图4：按标注段绘制，error 段显示为“已屏蔽”色块，不标 P0–P3
+        axes[3].set_xlim(0, total_steps)
+        axes[3].set_ylim(0, 1)
+        axes[3].set_yticks([])
+        axes[3].set_xlabel("Time Step", fontsize=12)
+        axes[3].set_title("Predicted Phases (from recovery annotation)", fontsize=14, fontweight="bold")
+        axes[3].grid(True, alpha=0.3)
+        for seg_start, seg_end, pidx in annotated_segments:
+            axes[3].axvspan(seg_start, seg_end, alpha=0.5, color=phase_colors[pidx] if pidx >= 0 else "#ffcccc")
+            axes[3].axvline(x=seg_start, color="k", linestyle="-", linewidth=1)
+            mid = (seg_start + seg_end) / 2
+            if pidx >= 0:
+                label = phase_labels[pidx] if pidx < len(phase_labels) else f"P{pidx}"
+            else:
+                label = "Error (masked)"
+            axes[3].text(mid, 0.5, label, ha="center", va="center", fontsize=10, fontweight="bold")
+    else:
+        # 原有逻辑：用 processor 整条轨迹算出的 checkpoints
+        for cp in checkpoints:
+            for ax in axes[:3]:
+                ax.axvline(x=cp, color="red", linestyle="--", linewidth=1.0, alpha=0.8)
+        axes[3].set_xlim(0, total_steps)
+        axes[3].set_ylim(0, 1)
+        axes[3].set_yticks([])
+        axes[3].set_xlabel("Time Step", fontsize=12)
+        axes[3].set_title(f"Predicted Phases (Total: {len(checkpoints)+1})", fontsize=14, fontweight="bold")
+        axes[3].grid(True, alpha=0.3)
+        phases = [0] + [cp for cp in checkpoints if cp < total_steps] + [total_steps]
+        for i in range(len(phases) - 1):
+            axes[3].axvspan(
+                phases[i],
+                phases[i + 1],
+                alpha=0.5,
+                color=phase_colors[i % len(phase_colors)],
+            )
+            axes[3].axvline(x=phases[i], color="k", linestyle="-", linewidth=1)
+            mid = (phases[i] + phases[i + 1]) / 2
+            label = phase_labels[i] if i < len(phase_labels) else f"Phase {i}"
+            axes[3].text(mid, 0.5, label, ha="center", va="center", fontsize=10, fontweight="bold")
 
     plt.suptitle(f"Trajectory Analysis: {hdf5_path.name}", fontsize=16, fontweight="bold")
     plt.tight_layout()

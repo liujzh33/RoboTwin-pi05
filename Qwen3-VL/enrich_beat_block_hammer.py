@@ -7,6 +7,7 @@ import os
 import json
 import glob
 import random
+from pathlib import Path
 from tqdm import tqdm
 
 DATA_ROOT = "/mnt/data1/liujingzhi/RoboTwin/policy/pi05/processed_data/beat_block_hammer-aloha-agilex_randomized_500-200"
@@ -66,7 +67,47 @@ PHASE_VARIANTS = {
     ],
 }
 
-FALLBACK_VARIANTS = ["Complete the task.", "Continue with the next step."]
+CORRECTION_VARIANTS = {
+    # grasp_position_offset (位置偏移抓空)
+    "grasp_position_offset": [
+        "[Correction] Open the gripper, adjust XY position, and retry grasping.",
+        "[Correction] Release, correct XY alignment, and try to grasp again.",
+        "[Correction] Open the fingers, shift XY position, and regrasp.",
+        "[Correction] Unclasp, realign in the XY plane, and attempt grasp.",
+        "[Correction] Open gripper, fix XY offset, and grasp once more.",
+    ],
+    # grasp_orientation_mismatch (姿态角度不对导致碰撞)
+    "grasp_orientation_mismatch": [
+        "[Correction] Open the gripper, adjust wrist rotation, and retry grasping.",
+        "[Correction] Release, fix wrist angle, and try to grasp again.",
+        "[Correction] Open the fingers, correct orientation, and regrasp.",
+        "[Correction] Unclasp, rotate the wrist to align, and attempt grasp.",
+        "[Correction] Open gripper, tune the rotation, and grasp once more.",
+    ],
+    # premature_close (在半空中提前闭合)
+    "premature_close": [
+        "[Correction] Open the gripper, move down to the target, and close it.",
+        "[Correction] Release, descend to the correct height, and grasp.",
+        "[Correction] Open the fingers, lower to the object, and close.",
+        "[Correction] Unclasp, move further down, and secure the grip.",
+        "[Correction] Open gripper, drop to the target level, and shut it.",
+    ],
+    # grasp_slip (搬运途中打滑掉落)
+    "grasp_slip": [
+        "[Correction] Track the dropped object, return to it, and regrasp.",
+        "[Correction] Locate the fallen object, move back, and grab it.",
+        "[Correction] Find the dropped item, go to it, and secure grip.",
+        "[Correction] Trace the slipped object, approach it, and regrasp.",
+        "[Correction] Track the item, return to its position, and grasp again.",
+    ],
+}
+
+BASE_PHASE_DESCS = {
+    "Move the gripper above the hammer.": 0,
+    "Close the gripper to grasp the hammer.": 1,
+    "Move the hammer above the red block.": 2,
+    "Move the hammer down to hit the red block.": 3,
+}
 
 
 def main(data_root=None):
@@ -95,24 +136,90 @@ def main(data_root=None):
                 instructions = ["Use the hammer to hit the red block."]
                 data["instructions"] = instructions
 
-            phase_info = data.get("phase_info", {})
-            num_phases = phase_info.get("num_phases")
-            if num_phases is None and data.get("subtasks"):
-                num_phases = len(data["subtasks"][0])
-            if num_phases is None:
-                num_phases = 4
+            phase_info = data.get("phase_info", {}) or {}
+            subtasks = data.get("subtasks") or []
 
-            new_subtasks_list = []
-            for _ in range(len(instructions)):
-                variant = []
-                for phase_idx in range(num_phases):
-                    if phase_idx in PHASE_VARIANTS:
-                        variant.append(random.choice(PHASE_VARIANTS[phase_idx]))
-                    else:
-                        variant.append(random.choice(FALLBACK_VARIANTS))
-                new_subtasks_list.append(variant)
+            # 若没有现成的 subtasks（老数据），退回到旧的 4 阶段生成逻辑
+            if not subtasks:
+                num_phases = phase_info.get("num_phases") or 4
+                new_subtasks_list = []
+                for _ in range(len(instructions)):
+                    variant = []
+                    for phase_idx in range(num_phases):
+                        if phase_idx in PHASE_VARIANTS:
+                            variant.append(random.choice(PHASE_VARIANTS[phase_idx]))
+                        else:
+                            # 理论上不会走到这里；保底用 Phase 0 文本
+                            variant.append(random.choice(PHASE_VARIANTS[0]))
+                    new_subtasks_list.append(variant)
+                data["subtasks"] = new_subtasks_list
+            else:
+                # Recovery/多阶段数据：基于现有 subtasks + error_type 丰富 correction 与 subtask
+                ep_name = os.path.basename(ep_dir)
+                try:
+                    ep_idx = int(ep_name.split("_")[1])
+                except Exception:
+                    ep_idx = -1
 
-            data["subtasks"] = new_subtasks_list
+                error_type = ""
+                meta_dir = Path(root) / "metadata"
+                if ep_idx >= 0 and meta_dir.exists():
+                    meta_path = meta_dir / f"episode{ep_idx}_metadata.json"
+                    if meta_path.exists():
+                        try:
+                            with open(meta_path, "r", encoding="utf-8") as mf:
+                                meta = json.load(mf)
+                            summary = meta.get("episode_summary") or {}
+                            etypes = summary.get("error_types") or []
+                            if etypes:
+                                error_type = etypes[0]
+                        except Exception:
+                            error_type = ""
+
+                def _infer_phase_idx(text: str) -> int | None:
+                    s = (text or "").strip()
+                    if not s or "[MASKED]" in s:
+                        return None
+                    # 拆掉 [Correction] / [Subtask] 包装，只看子任务部分
+                    if " [Subtask] " in s:
+                        s = s.split(" [Subtask] ")[-1].strip()
+                    for base_desc, idx_phase in BASE_PHASE_DESCS.items():
+                        if base_desc in s or s == base_desc:
+                            return idx_phase
+                    return None
+
+                new_subtasks_list: list[list[str]] = []
+                for phases in subtasks:
+                    variant_phases: list[str] = []
+                    for phase_text in phases:
+                        txt = phase_text or ""
+                        if "[MASKED]" in txt:
+                            # 不对 MASKED 段做任何丰富化
+                            variant_phases.append(txt)
+                            continue
+
+                        phase_idx = _infer_phase_idx(txt)
+                        if phase_idx is None:
+                            # 无法识别阶段，保留原文本以免破坏语义
+                            variant_phases.append(txt)
+                            continue
+
+                        # 选择子任务表述
+                        subtask_variant = random.choice(PHASE_VARIANTS[phase_idx])
+
+                        # 是否需要加入 / 更新 Correction 文本
+                        if "[Correction]" in txt and error_type in CORRECTION_VARIANTS:
+                            corr_variant = random.choice(CORRECTION_VARIANTS[error_type])
+                            enriched = f"{corr_variant} [Subtask] {subtask_variant}"
+                        else:
+                            # 普通子任务阶段：只替换子任务描述
+                            enriched = subtask_variant
+
+                        variant_phases.append(enriched)
+
+                    new_subtasks_list.append(variant_phases)
+
+                data["subtasks"] = new_subtasks_list
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             success_count += 1

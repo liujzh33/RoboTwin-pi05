@@ -25,7 +25,7 @@ import packaging.version
 import PIL.Image
 import torch
 import torch.utils
-from datasets import concatenate_datasets, load_dataset
+from datasets import load_dataset
 from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.constants import REPOCARD_NAME
 from huggingface_hub.errors import RevisionNotFoundError
@@ -893,11 +893,14 @@ class LeRobotDataset(torch.utils.data.Dataset):
             self.tolerance_s,
         )
 
-        video_files = list(self.root.rglob("*.mp4"))
-        assert len(video_files) == self.num_episodes * len(self.meta.video_keys)
-
-        parquet_files = list(self.root.rglob("*.parquet"))
-        assert len(parquet_files) == self.num_episodes
+        # Avoid self.root.rglob(...): it walks the entire tree including images/ (millions of PNGs) and costs
+        # O(tree size) per episode — visibly slower as conversion progresses. Check only this episode's files.
+        ep_parquet = self.root / self.meta.get_data_file_path(episode_index)
+        assert ep_parquet.is_file(), f"Missing parquet for episode {episode_index}: {ep_parquet}"
+        if len(self.meta.video_keys) > 0:
+            for vid_key in self.meta.video_keys:
+                vp = self.root / self.meta.get_video_file_path(episode_index, vid_key)
+                assert vp.is_file(), f"Missing video {vid_key} for episode {episode_index}: {vp}"
 
         # delete images
         img_dir = self.root / "images"
@@ -911,8 +914,9 @@ class LeRobotDataset(torch.utils.data.Dataset):
         episode_dict = {key: episode_buffer[key] for key in self.hf_features}
         ep_dataset = datasets.Dataset.from_dict(episode_dict, features=self.hf_features, split="train")
         ep_dataset = embed_images(ep_dataset)
-        self.hf_dataset = concatenate_datasets([self.hf_dataset, ep_dataset])
-        self.hf_dataset.set_transform(hf_transform_to_torch)
+        # Do not concatenate the full in-memory HF dataset on every episode: that is O(n^2) and dominates
+        # large conversions. Parquet files are the source of truth; readers use load_hf_dataset() from disk.
+        self.hf_dataset = None
         ep_data_path = self.root / self.meta.get_data_file_path(ep_index=episode_index)
         ep_data_path.parent.mkdir(parents=True, exist_ok=True)
         ep_dataset.to_parquet(ep_data_path)

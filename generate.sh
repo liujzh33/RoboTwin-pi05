@@ -1,6 +1,10 @@
 # 将 processed_data（含 instructions.json 的 subtasks/phase_info）转为 LeRobot HF 数据集
 # 与 blocks_ranking_rgb_pi05_200 一致：会写入 instructions、subtasks、frame_idx、phase_info
-# 用法: bash generate.sh <processed_data_dir> <repo_id>
+# 用法:
+#   bash generate.sh <processed_data_dir> <repo_id> [workers]
+# 说明:
+#   - workers 省略或 <=1: 走原始单进程转换
+#   - workers >=2: 按 raw_dir 的一级子目录并行转换，再自动合并为最终 repo_id
 #
 # 单任务示例:
 #   bash generate.sh ./processed_data/blocks_ranking_size-aloha-agilex_randomized_500-200 blocks_ranking_size_pi05_200
@@ -26,5 +30,28 @@
 #
 data_dir=${1}
 repo_id=${2}
-uv run examples/aloha_real/convert_aloha_data_to_lerobot_robotwin.py --raw_dir "$data_dir" --repo_id "$repo_id"
+workers=${3:-1}
+
+if [ -z "$data_dir" ] || [ -z "$repo_id" ]; then
+  echo "Usage: bash generate.sh <processed_data_dir> <repo_id> [workers]"
+  exit 1
+fi
+
+# Ensure we use the local (workspace) lerobot package if present.
+# Without this, python will import lerobot from site-packages and our conversion fixes won't apply.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOCAL_LEROBOT_ROOT="${SCRIPT_DIR}/lerobot"
+if [ -d "$LOCAL_LEROBOT_ROOT" ]; then
+  export PYTHONPATH="${LOCAL_LEROBOT_ROOT}:${PYTHONPATH}"
+  echo "Using local lerobot from: $LOCAL_LEROBOT_ROOT"
+fi
+
+if [ "$workers" -ge 2 ]; then
+  uv run scripts/generate_parallel_multi_task.py \
+    --raw_dir "$data_dir" \
+    --repo_id "$repo_id" \
+    --workers "$workers"
+else
+  uv run examples/aloha_real/convert_aloha_data_to_lerobot_robotwin.py --raw_dir "$data_dir" --repo_id "$repo_id"
+fi
 
