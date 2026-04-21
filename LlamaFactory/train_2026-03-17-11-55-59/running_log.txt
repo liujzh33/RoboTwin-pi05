@@ -1,0 +1,915 @@
+[INFO|2026-03-17 11:57:56] configuration_utils.py:668 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/config.json
+[INFO|2026-03-17 11:57:56] configuration_utils.py:742 >> Model config Qwen2VLConfig {
+  "architectures": [
+    "Qwen2VLForConditionalGeneration"
+  ],
+  "dtype": "bfloat16",
+  "image_token_id": 151655,
+  "model_type": "qwen2_vl",
+  "text_config": {
+    "attention_dropout": 0.0,
+    "bos_token_id": 151643,
+    "dtype": "bfloat16",
+    "eos_token_id": 151645,
+    "hidden_act": "silu",
+    "hidden_size": 3584,
+    "initializer_range": 0.02,
+    "intermediate_size": 18944,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "max_position_embeddings": 32768,
+    "max_window_layers": 28,
+    "model_type": "qwen2_vl_text",
+    "num_attention_heads": 28,
+    "num_hidden_layers": 28,
+    "num_key_value_heads": 4,
+    "pad_token_id": null,
+    "rms_norm_eps": 1e-06,
+    "rope_parameters": {
+      "mrope_section": [
+        16,
+        24,
+        24
+      ],
+      "rope_theta": 1000000.0,
+      "rope_type": "default",
+      "type": "mrope"
+    },
+    "sliding_window": null,
+    "use_cache": true,
+    "use_sliding_window": false,
+    "vocab_size": 152064
+  },
+  "tie_word_embeddings": false,
+  "transformers_version": "5.2.0",
+  "video_token_id": 151656,
+  "vision_config": {
+    "depth": 32,
+    "embed_dim": 1280,
+    "hidden_act": "quick_gelu",
+    "hidden_size": 3584,
+    "in_channels": 3,
+    "in_chans": 3,
+    "initializer_range": 0.02,
+    "mlp_ratio": 4,
+    "model_type": "qwen2_vl",
+    "num_heads": 16,
+    "patch_size": 14,
+    "spatial_merge_size": 2,
+    "spatial_patch_size": 14,
+    "temporal_patch_size": 2
+  },
+  "vision_end_token_id": 151653,
+  "vision_start_token_id": 151652,
+  "vision_token_id": 151654
+}
+
+[INFO|2026-03-17 11:57:57] image_processing_base.py:342 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/preprocessor_config.json
+[INFO|2026-03-17 11:57:57] processing_utils.py:1093 >> loading configuration file None
+[INFO|2026-03-17 11:57:57] image_processing_base.py:342 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/preprocessor_config.json
+[INFO|2026-03-17 11:57:57] image_processing_base.py:342 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/preprocessor_config.json
+[INFO|2026-03-17 11:57:57] image_processing_base.py:377 >> Image processor Qwen2VLImageProcessorFast {
+  "data_format": "channels_first",
+  "do_convert_rgb": true,
+  "do_normalize": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "image_mean": [
+    0.48145466,
+    0.4578275,
+    0.40821073
+  ],
+  "image_processor_type": "Qwen2VLImageProcessorFast",
+  "image_std": [
+    0.26862954,
+    0.26130258,
+    0.27577711
+  ],
+  "merge_size": 2,
+  "patch_size": 14,
+  "resample": 3,
+  "rescale_factor": 0.00392156862745098,
+  "size": {
+    "longest_edge": 12845056,
+    "shortest_edge": 3136
+  },
+  "temporal_patch_size": 2
+}
+
+[INFO|2026-03-17 11:57:57] configuration_utils.py:668 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/config.json
+[INFO|2026-03-17 11:57:57] configuration_utils.py:742 >> Model config Qwen2VLConfig {
+  "architectures": [
+    "Qwen2VLForConditionalGeneration"
+  ],
+  "dtype": "bfloat16",
+  "image_token_id": 151655,
+  "model_type": "qwen2_vl",
+  "text_config": {
+    "attention_dropout": 0.0,
+    "bos_token_id": 151643,
+    "dtype": "bfloat16",
+    "eos_token_id": 151645,
+    "hidden_act": "silu",
+    "hidden_size": 3584,
+    "initializer_range": 0.02,
+    "intermediate_size": 18944,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "max_position_embeddings": 32768,
+    "max_window_layers": 28,
+    "model_type": "qwen2_vl_text",
+    "num_attention_heads": 28,
+    "num_hidden_layers": 28,
+    "num_key_value_heads": 4,
+    "pad_token_id": null,
+    "rms_norm_eps": 1e-06,
+    "rope_parameters": {
+      "mrope_section": [
+        16,
+        24,
+        24
+      ],
+      "rope_theta": 1000000.0,
+      "rope_type": "default",
+      "type": "mrope"
+    },
+    "sliding_window": null,
+    "use_cache": true,
+    "use_sliding_window": false,
+    "vocab_size": 152064
+  },
+  "tie_word_embeddings": false,
+  "transformers_version": "5.2.0",
+  "video_token_id": 151656,
+  "vision_config": {
+    "depth": 32,
+    "embed_dim": 1280,
+    "hidden_act": "quick_gelu",
+    "hidden_size": 3584,
+    "in_channels": 3,
+    "in_chans": 3,
+    "initializer_range": 0.02,
+    "mlp_ratio": 4,
+    "model_type": "qwen2_vl",
+    "num_heads": 16,
+    "patch_size": 14,
+    "spatial_merge_size": 2,
+    "spatial_patch_size": 14,
+    "temporal_patch_size": 2
+  },
+  "vision_end_token_id": 151653,
+  "vision_start_token_id": 151652,
+  "vision_token_id": 151654
+}
+
+[INFO|2026-03-17 11:57:58] video_processing_utils.py:712 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/preprocessor_config.json
+[INFO|2026-03-17 11:57:58] video_processing_utils.py:712 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/preprocessor_config.json
+[INFO|2026-03-17 11:57:58] video_processing_utils.py:759 >> Video processor Qwen2VLVideoProcessor {
+  "data_format": "channels_first",
+  "default_to_square": true,
+  "do_convert_rgb": true,
+  "do_normalize": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "do_sample_frames": false,
+  "image_mean": [
+    0.48145466,
+    0.4578275,
+    0.40821073
+  ],
+  "image_processor_type": "Qwen2VLImageProcessor",
+  "image_std": [
+    0.26862954,
+    0.26130258,
+    0.27577711
+  ],
+  "max_frames": 768,
+  "merge_size": 2,
+  "min_frames": 4,
+  "patch_size": 14,
+  "resample": 3,
+  "rescale_factor": 0.00392156862745098,
+  "return_metadata": false,
+  "size": {
+    "longest_edge": 12845056,
+    "shortest_edge": 3136
+  },
+  "temporal_patch_size": 2,
+  "video_processor_type": "Qwen2VLVideoProcessor"
+}
+
+[INFO|2026-03-17 11:57:58] processing_utils.py:1170 >> Processor Qwen2VLProcessor:
+- image_processor: Qwen2VLImageProcessorFast {
+  "data_format": "channels_first",
+  "do_convert_rgb": true,
+  "do_normalize": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "image_mean": [
+    0.48145466,
+    0.4578275,
+    0.40821073
+  ],
+  "image_processor_type": "Qwen2VLImageProcessorFast",
+  "image_std": [
+    0.26862954,
+    0.26130258,
+    0.27577711
+  ],
+  "merge_size": 2,
+  "patch_size": 14,
+  "resample": 3,
+  "rescale_factor": 0.00392156862745098,
+  "size": {
+    "longest_edge": 12845056,
+    "shortest_edge": 3136
+  },
+  "temporal_patch_size": 2
+}
+
+- tokenizer: Qwen2Tokenizer(name_or_path='/mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct', vocab_size=151643, model_max_length=32768, padding_side='left', truncation_side='right', special_tokens={'eos_token': '<|im_end|>', 'pad_token': '<|endoftext|>'}, added_tokens_decoder={
+	151643: AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151644: AddedToken("<|im_start|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151645: AddedToken("<|im_end|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151646: AddedToken("<|object_ref_start|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151647: AddedToken("<|object_ref_end|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151648: AddedToken("<|box_start|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151649: AddedToken("<|box_end|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151650: AddedToken("<|quad_start|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151651: AddedToken("<|quad_end|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151652: AddedToken("<|vision_start|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151653: AddedToken("<|vision_end|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151654: AddedToken("<|vision_pad|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151655: AddedToken("<|image_pad|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	151656: AddedToken("<|video_pad|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+}
+)
+- video_processor: Qwen2VLVideoProcessor {
+  "data_format": "channels_first",
+  "default_to_square": true,
+  "do_convert_rgb": true,
+  "do_normalize": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "do_sample_frames": false,
+  "image_mean": [
+    0.48145466,
+    0.4578275,
+    0.40821073
+  ],
+  "image_processor_type": "Qwen2VLImageProcessor",
+  "image_std": [
+    0.26862954,
+    0.26130258,
+    0.27577711
+  ],
+  "max_frames": 768,
+  "merge_size": 2,
+  "min_frames": 4,
+  "patch_size": 14,
+  "resample": 3,
+  "rescale_factor": 0.00392156862745098,
+  "return_metadata": false,
+  "size": {
+    "longest_edge": 12845056,
+    "shortest_edge": 3136
+  },
+  "temporal_patch_size": 2,
+  "video_processor_type": "Qwen2VLVideoProcessor"
+}
+
+
+{
+  "image_processor": {
+    "data_format": "channels_first",
+    "do_convert_rgb": true,
+    "do_normalize": true,
+    "do_rescale": true,
+    "do_resize": true,
+    "image_mean": [
+      0.48145466,
+      0.4578275,
+      0.40821073
+    ],
+    "image_processor_type": "Qwen2VLImageProcessorFast",
+    "image_std": [
+      0.26862954,
+      0.26130258,
+      0.27577711
+    ],
+    "merge_size": 2,
+    "patch_size": 14,
+    "resample": 3,
+    "rescale_factor": 0.00392156862745098,
+    "size": {
+      "longest_edge": 12845056,
+      "shortest_edge": 3136
+    },
+    "temporal_patch_size": 2
+  },
+  "processor_class": "Qwen2VLProcessor",
+  "video_processor": {
+    "data_format": "channels_first",
+    "default_to_square": true,
+    "do_convert_rgb": true,
+    "do_normalize": true,
+    "do_rescale": true,
+    "do_resize": true,
+    "do_sample_frames": false,
+    "image_mean": [
+      0.48145466,
+      0.4578275,
+      0.40821073
+    ],
+    "image_processor_type": "Qwen2VLImageProcessor",
+    "image_std": [
+      0.26862954,
+      0.26130258,
+      0.27577711
+    ],
+    "max_frames": 768,
+    "merge_size": 2,
+    "min_frames": 4,
+    "patch_size": 14,
+    "resample": 3,
+    "rescale_factor": 0.00392156862745098,
+    "return_metadata": false,
+    "size": {
+      "longest_edge": 12845056,
+      "shortest_edge": 3136
+    },
+    "temporal_patch_size": 2,
+    "video_processor_type": "Qwen2VLVideoProcessor"
+  }
+}
+
+[INFO|2026-03-17 11:57:58] logging.py:144 >> Loading dataset /mnt/data1/liujingzhi/RoboTwin/policy/pi05/judge_dataset/recovery_judge_beat_block_hammer/recovery_judge_dataset_merged.json...
+[INFO|2026-03-17 11:58:02] configuration_utils.py:668 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/config.json
+[INFO|2026-03-17 11:58:02] configuration_utils.py:742 >> Model config Qwen2VLConfig {
+  "architectures": [
+    "Qwen2VLForConditionalGeneration"
+  ],
+  "dtype": "bfloat16",
+  "image_token_id": 151655,
+  "model_type": "qwen2_vl",
+  "text_config": {
+    "attention_dropout": 0.0,
+    "bos_token_id": 151643,
+    "dtype": "bfloat16",
+    "eos_token_id": 151645,
+    "hidden_act": "silu",
+    "hidden_size": 3584,
+    "initializer_range": 0.02,
+    "intermediate_size": 18944,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "max_position_embeddings": 32768,
+    "max_window_layers": 28,
+    "model_type": "qwen2_vl_text",
+    "num_attention_heads": 28,
+    "num_hidden_layers": 28,
+    "num_key_value_heads": 4,
+    "pad_token_id": null,
+    "rms_norm_eps": 1e-06,
+    "rope_parameters": {
+      "mrope_section": [
+        16,
+        24,
+        24
+      ],
+      "rope_theta": 1000000.0,
+      "rope_type": "default",
+      "type": "mrope"
+    },
+    "sliding_window": null,
+    "use_cache": true,
+    "use_sliding_window": false,
+    "vocab_size": 152064
+  },
+  "tie_word_embeddings": false,
+  "transformers_version": "5.2.0",
+  "video_token_id": 151656,
+  "vision_config": {
+    "depth": 32,
+    "embed_dim": 1280,
+    "hidden_act": "quick_gelu",
+    "hidden_size": 3584,
+    "in_channels": 3,
+    "in_chans": 3,
+    "initializer_range": 0.02,
+    "mlp_ratio": 4,
+    "model_type": "qwen2_vl",
+    "num_heads": 16,
+    "patch_size": 14,
+    "spatial_merge_size": 2,
+    "spatial_patch_size": 14,
+    "temporal_patch_size": 2
+  },
+  "vision_end_token_id": 151653,
+  "vision_start_token_id": 151652,
+  "vision_token_id": 151654
+}
+
+[INFO|2026-03-17 11:58:02] logging.py:144 >> KV cache is disabled during training.
+[INFO|2026-03-17 11:58:02] modeling_utils.py:707 >> loading weights file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/model.safetensors.index.json
+[INFO|2026-03-17 11:58:02] modeling_utils.py:779 >> Will use dtype=torch.bfloat16 as defined in model's config object
+[INFO|2026-03-17 11:58:02] configuration_utils.py:1014 >> Generate config GenerationConfig {
+  "output_attentions": false,
+  "output_hidden_states": false,
+  "use_cache": false
+}
+
+[INFO|2026-03-17 11:58:08] configuration_utils.py:965 >> loading configuration file /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct/generation_config.json
+[INFO|2026-03-17 11:58:08] configuration_utils.py:1014 >> Generate config GenerationConfig {
+  "bos_token_id": 151643,
+  "do_sample": true,
+  "eos_token_id": [
+    151645,
+    151643
+  ],
+  "pad_token_id": 151643,
+  "repetition_penalty": 1.0,
+  "temperature": 0.01,
+  "top_k": 1,
+  "top_p": 0.001
+}
+
+[INFO|2026-03-17 11:58:08] dynamic_module_utils.py:406 >> Could not locate the custom_generate/generate.py inside /mnt/data1/liujingzhi/Qwen-VL-7B/qwen/Qwen2-VL-7B-Instruct.
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Gradient checkpointing enabled.
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Using torch SDPA for faster training and inference.
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Upcasting trainable params to float32.
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Fine-tuning method: LoRA
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Found linear modules: k_proj,q_proj,up_proj,v_proj,o_proj,gate_proj,down_proj
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Set vision model not trainable: ['visual.patch_embed', 'visual.blocks'].
+[INFO|2026-03-17 11:58:08] logging.py:144 >> Set multi model projector not trainable: visual.merger.
+[INFO|2026-03-17 11:58:10] logging.py:144 >> trainable params: 20,185,088 || all params: 8,311,560,704 || trainable%: 0.2429
+[WARNING|2026-03-17 11:58:10] trainer_utils.py:1234 >> The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 151645, 'bos_token_id': None, 'pad_token_id': 151643}.
+[INFO|2026-03-17 11:58:11] trainer.py:1587 >> ***** Running training *****
+[INFO|2026-03-17 11:58:11] trainer.py:1588 >>   Num examples = 198
+[INFO|2026-03-17 11:58:11] trainer.py:1589 >>   Num Epochs = 50
+[INFO|2026-03-17 11:58:11] trainer.py:1590 >>   Instantaneous batch size per device = 2
+[INFO|2026-03-17 11:58:11] trainer.py:1593 >>   Total train batch size (w. parallel, distributed & accumulation) = 16
+[INFO|2026-03-17 11:58:11] trainer.py:1594 >>   Gradient Accumulation steps = 8
+[INFO|2026-03-17 11:58:11] trainer.py:1595 >>   Total optimization steps = 650
+[INFO|2026-03-17 11:58:11] trainer.py:1596 >>   Number of trainable parameters = 20,185,088
+[INFO|2026-03-17 11:58:55] logging.py:144 >> {'loss': 2.0022, 'learning_rate': 4.9995e-05, 'epoch': 0.40, 'throughput': 1396.63}
+[INFO|2026-03-17 11:59:39] logging.py:144 >> {'loss': 1.5317, 'learning_rate': 4.9976e-05, 'epoch': 0.81, 'throughput': 1388.14}
+[INFO|2026-03-17 12:00:15] logging.py:144 >> {'loss': 1.3657, 'learning_rate': 4.9943e-05, 'epoch': 1.16, 'throughput': 1421.99}
+[INFO|2026-03-17 12:00:51] logging.py:144 >> {'loss': 1.1705, 'learning_rate': 4.9895e-05, 'epoch': 1.57, 'throughput': 1487.21}
+[INFO|2026-03-17 12:00:51] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20
+[INFO|2026-03-17 12:00:51] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20/chat_template.jinja
+[INFO|2026-03-17 12:00:51] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20/tokenizer_config.json
+[INFO|2026-03-17 12:00:51] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20/chat_template.jinja
+[INFO|2026-03-17 12:00:51] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20/tokenizer_config.json
+[INFO|2026-03-17 12:00:51] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20/chat_template.jinja
+[INFO|2026-03-17 12:00:52] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-20/processor_config.json
+[INFO|2026-03-17 12:01:25] logging.py:144 >> {'loss': 1.0266, 'learning_rate': 4.9832e-05, 'epoch': 1.97, 'throughput': 1541.29}
+[INFO|2026-03-17 12:01:59] logging.py:144 >> {'loss': 0.9142, 'learning_rate': 4.9755e-05, 'epoch': 2.32, 'throughput': 1543.15}
+[INFO|2026-03-17 12:03:00] logging.py:144 >> {'loss': 0.7832, 'learning_rate': 4.9663e-05, 'epoch': 2.73, 'throughput': 1432.97}
+[INFO|2026-03-17 12:03:46] logging.py:144 >> {'loss': 0.6458, 'learning_rate': 4.9557e-05, 'epoch': 3.08, 'throughput': 1395.33}
+[INFO|2026-03-17 12:03:46] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40
+[INFO|2026-03-17 12:03:46] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40/chat_template.jinja
+[INFO|2026-03-17 12:03:46] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40/tokenizer_config.json
+[INFO|2026-03-17 12:03:47] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40/chat_template.jinja
+[INFO|2026-03-17 12:03:47] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40/tokenizer_config.json
+[INFO|2026-03-17 12:03:48] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40/chat_template.jinja
+[INFO|2026-03-17 12:03:49] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-40/processor_config.json
+[INFO|2026-03-17 12:04:28] logging.py:144 >> {'loss': 0.5275, 'learning_rate': 4.9437e-05, 'epoch': 3.48, 'throughput': 1404.51}
+[INFO|2026-03-17 12:05:15] logging.py:144 >> {'loss': 0.4241, 'learning_rate': 4.9302e-05, 'epoch': 3.89, 'throughput': 1391.23}
+[INFO|2026-03-17 12:06:02] logging.py:144 >> {'loss': 0.3778, 'learning_rate': 4.9153e-05, 'epoch': 4.24, 'throughput': 1367.21}
+[INFO|2026-03-17 12:06:42] logging.py:144 >> {'loss': 0.2853, 'learning_rate': 4.8990e-05, 'epoch': 4.65, 'throughput': 1380.92}
+[INFO|2026-03-17 12:06:42] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60
+[INFO|2026-03-17 12:06:42] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60/chat_template.jinja
+[INFO|2026-03-17 12:06:42] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60/tokenizer_config.json
+[INFO|2026-03-17 12:06:43] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60/chat_template.jinja
+[INFO|2026-03-17 12:06:43] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60/tokenizer_config.json
+[INFO|2026-03-17 12:06:43] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60/chat_template.jinja
+[INFO|2026-03-17 12:06:44] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-60/processor_config.json
+[INFO|2026-03-17 12:07:33] logging.py:144 >> {'loss': 0.2616, 'learning_rate': 4.8813e-05, 'epoch': 5.00, 'throughput': 1350.11}
+[INFO|2026-03-17 12:08:17] logging.py:144 >> {'loss': 0.2047, 'learning_rate': 4.8623e-05, 'epoch': 5.40, 'throughput': 1353.77}
+[INFO|2026-03-17 12:09:23] logging.py:144 >> {'loss': 0.1846, 'learning_rate': 4.8418e-05, 'epoch': 5.81, 'throughput': 1313.06}
+[INFO|2026-03-17 12:10:01] logging.py:144 >> {'loss': 0.1707, 'learning_rate': 4.8200e-05, 'epoch': 6.16, 'throughput': 1317.76}
+[INFO|2026-03-17 12:10:01] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80
+[INFO|2026-03-17 12:10:01] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80/chat_template.jinja
+[INFO|2026-03-17 12:10:01] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80/tokenizer_config.json
+[INFO|2026-03-17 12:10:02] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80/chat_template.jinja
+[INFO|2026-03-17 12:10:02] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80/tokenizer_config.json
+[INFO|2026-03-17 12:10:02] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80/chat_template.jinja
+[INFO|2026-03-17 12:10:03] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-80/processor_config.json
+[INFO|2026-03-17 12:10:41] logging.py:144 >> {'loss': 0.1373, 'learning_rate': 4.7968e-05, 'epoch': 6.57, 'throughput': 1329.55}
+[INFO|2026-03-17 12:11:32] logging.py:144 >> {'loss': 0.1465, 'learning_rate': 4.7723e-05, 'epoch': 6.97, 'throughput': 1321.62}
+[INFO|2026-03-17 12:12:28] logging.py:144 >> {'loss': 0.1099, 'learning_rate': 4.7464e-05, 'epoch': 7.32, 'throughput': 1297.46}
+[INFO|2026-03-17 12:13:11] logging.py:144 >> {'loss': 0.1208, 'learning_rate': 4.7192e-05, 'epoch': 7.73, 'throughput': 1303.27}
+[INFO|2026-03-17 12:13:11] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100
+[INFO|2026-03-17 12:13:11] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100/chat_template.jinja
+[INFO|2026-03-17 12:13:11] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100/tokenizer_config.json
+[INFO|2026-03-17 12:13:12] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100/chat_template.jinja
+[INFO|2026-03-17 12:13:12] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100/tokenizer_config.json
+[INFO|2026-03-17 12:13:12] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100/chat_template.jinja
+[INFO|2026-03-17 12:13:13] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-100/processor_config.json
+[INFO|2026-03-17 12:13:48] logging.py:144 >> {'loss': 0.0981, 'learning_rate': 4.6908e-05, 'epoch': 8.08, 'throughput': 1309.61}
+[INFO|2026-03-17 12:14:34] logging.py:144 >> {'loss': 0.1007, 'learning_rate': 4.6610e-05, 'epoch': 8.48, 'throughput': 1310.19}
+[INFO|2026-03-17 12:15:38] logging.py:144 >> {'loss': 0.0889, 'learning_rate': 4.6300e-05, 'epoch': 8.89, 'throughput': 1289.64}
+[INFO|2026-03-17 12:16:19] logging.py:144 >> {'loss': 0.0820, 'learning_rate': 4.5978e-05, 'epoch': 9.24, 'throughput': 1290.58}
+[INFO|2026-03-17 12:16:19] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120
+[INFO|2026-03-17 12:16:19] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120/chat_template.jinja
+[INFO|2026-03-17 12:16:19] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120/tokenizer_config.json
+[INFO|2026-03-17 12:16:19] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120/chat_template.jinja
+[INFO|2026-03-17 12:16:19] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120/tokenizer_config.json
+[INFO|2026-03-17 12:16:19] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120/chat_template.jinja
+[INFO|2026-03-17 12:16:20] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-120/processor_config.json
+[INFO|2026-03-17 12:17:19] logging.py:144 >> {'loss': 0.0830, 'learning_rate': 4.5643e-05, 'epoch': 9.65, 'throughput': 1275.85}
+[INFO|2026-03-17 12:18:23] logging.py:144 >> {'loss': 0.0881, 'learning_rate': 4.5296e-05, 'epoch': 10.00, 'throughput': 1252.74}
+[INFO|2026-03-17 12:19:11] logging.py:144 >> {'loss': 0.0755, 'learning_rate': 4.4938e-05, 'epoch': 10.40, 'throughput': 1254.01}
+[INFO|2026-03-17 12:19:52] logging.py:144 >> {'loss': 0.0737, 'learning_rate': 4.4567e-05, 'epoch': 10.81, 'throughput': 1261.71}
+[INFO|2026-03-17 12:19:52] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140
+[INFO|2026-03-17 12:19:52] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140/chat_template.jinja
+[INFO|2026-03-17 12:19:52] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140/tokenizer_config.json
+[INFO|2026-03-17 12:19:53] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140/chat_template.jinja
+[INFO|2026-03-17 12:19:53] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140/tokenizer_config.json
+[INFO|2026-03-17 12:19:53] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140/chat_template.jinja
+[INFO|2026-03-17 12:19:55] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-140/processor_config.json
+[INFO|2026-03-17 12:20:34] logging.py:144 >> {'loss': 0.0749, 'learning_rate': 4.4186e-05, 'epoch': 11.16, 'throughput': 1261.80}
+[INFO|2026-03-17 12:21:23] logging.py:144 >> {'loss': 0.0721, 'learning_rate': 4.3793e-05, 'epoch': 11.57, 'throughput': 1262.23}
+[INFO|2026-03-17 12:22:06] logging.py:144 >> {'loss': 0.0687, 'learning_rate': 4.3389e-05, 'epoch': 11.97, 'throughput': 1267.08}
+[INFO|2026-03-17 12:22:37] logging.py:144 >> {'loss': 0.0704, 'learning_rate': 4.2974e-05, 'epoch': 12.32, 'throughput': 1276.35}
+[INFO|2026-03-17 12:22:37] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160
+[INFO|2026-03-17 12:22:37] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160/chat_template.jinja
+[INFO|2026-03-17 12:22:37] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160/tokenizer_config.json
+[INFO|2026-03-17 12:22:38] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160/chat_template.jinja
+[INFO|2026-03-17 12:22:38] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160/tokenizer_config.json
+[INFO|2026-03-17 12:22:38] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160/chat_template.jinja
+[INFO|2026-03-17 12:22:39] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-160/processor_config.json
+[INFO|2026-03-17 12:23:13] logging.py:144 >> {'loss': 0.0717, 'learning_rate': 4.2549e-05, 'epoch': 12.73, 'throughput': 1286.48}
+[INFO|2026-03-17 12:24:07] logging.py:144 >> {'loss': 0.0701, 'learning_rate': 4.2114e-05, 'epoch': 13.08, 'throughput': 1276.97}
+[INFO|2026-03-17 12:25:08] logging.py:144 >> {'loss': 0.0630, 'learning_rate': 4.1668e-05, 'epoch': 13.48, 'throughput': 1266.84}
+[INFO|2026-03-17 12:25:55] logging.py:144 >> {'loss': 0.0590, 'learning_rate': 4.1213e-05, 'epoch': 13.89, 'throughput': 1267.56}
+[INFO|2026-03-17 12:25:55] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180
+[INFO|2026-03-17 12:25:55] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180/chat_template.jinja
+[INFO|2026-03-17 12:25:55] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180/tokenizer_config.json
+[INFO|2026-03-17 12:25:56] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180/chat_template.jinja
+[INFO|2026-03-17 12:25:56] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180/tokenizer_config.json
+[INFO|2026-03-17 12:25:56] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180/chat_template.jinja
+[INFO|2026-03-17 12:25:57] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-180/processor_config.json
+[INFO|2026-03-17 12:26:26] logging.py:144 >> {'loss': 0.0577, 'learning_rate': 4.0749e-05, 'epoch': 14.24, 'throughput': 1276.39}
+[INFO|2026-03-17 12:27:04] logging.py:144 >> {'loss': 0.0631, 'learning_rate': 4.0275e-05, 'epoch': 14.65, 'throughput': 1283.53}
+[INFO|2026-03-17 12:27:41] logging.py:144 >> {'loss': 0.0475, 'learning_rate': 3.9792e-05, 'epoch': 15.00, 'throughput': 1286.83}
+[INFO|2026-03-17 12:28:16] logging.py:144 >> {'loss': 0.0500, 'learning_rate': 3.9301e-05, 'epoch': 15.40, 'throughput': 1296.13}
+[INFO|2026-03-17 12:28:16] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200
+[INFO|2026-03-17 12:28:16] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200/chat_template.jinja
+[INFO|2026-03-17 12:28:16] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200/tokenizer_config.json
+[INFO|2026-03-17 12:28:17] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200/chat_template.jinja
+[INFO|2026-03-17 12:28:17] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200/tokenizer_config.json
+[INFO|2026-03-17 12:28:17] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200/chat_template.jinja
+[INFO|2026-03-17 12:28:17] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-200/processor_config.json
+[INFO|2026-03-17 12:29:00] logging.py:144 >> {'loss': 0.0467, 'learning_rate': 3.8801e-05, 'epoch': 15.81, 'throughput': 1298.71}
+[INFO|2026-03-17 12:29:34] logging.py:144 >> {'loss': 0.0475, 'learning_rate': 3.8293e-05, 'epoch': 16.16, 'throughput': 1303.76}
+[INFO|2026-03-17 12:30:13] logging.py:144 >> {'loss': 0.0390, 'learning_rate': 3.7778e-05, 'epoch': 16.57, 'throughput': 1309.24}
+[INFO|2026-03-17 12:30:47] logging.py:144 >> {'loss': 0.0482, 'learning_rate': 3.7255e-05, 'epoch': 16.97, 'throughput': 1317.77}
+[INFO|2026-03-17 12:30:47] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220
+[INFO|2026-03-17 12:30:47] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220/chat_template.jinja
+[INFO|2026-03-17 12:30:47] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220/tokenizer_config.json
+[INFO|2026-03-17 12:30:47] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220/chat_template.jinja
+[INFO|2026-03-17 12:30:47] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220/tokenizer_config.json
+[INFO|2026-03-17 12:30:47] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220/chat_template.jinja
+[INFO|2026-03-17 12:30:48] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-220/processor_config.json
+[INFO|2026-03-17 12:31:17] logging.py:144 >> {'loss': 0.0380, 'learning_rate': 3.6725e-05, 'epoch': 17.32, 'throughput': 1324.49}
+[INFO|2026-03-17 12:31:52] logging.py:144 >> {'loss': 0.0385, 'learning_rate': 3.6188e-05, 'epoch': 17.73, 'throughput': 1332.04}
+[INFO|2026-03-17 12:32:30] logging.py:144 >> {'loss': 0.0408, 'learning_rate': 3.5644e-05, 'epoch': 18.08, 'throughput': 1334.02}
+[INFO|2026-03-17 12:33:09] logging.py:144 >> {'loss': 0.0353, 'learning_rate': 3.5095e-05, 'epoch': 18.48, 'throughput': 1338.01}
+[INFO|2026-03-17 12:33:09] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240
+[INFO|2026-03-17 12:33:09] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240/chat_template.jinja
+[INFO|2026-03-17 12:33:09] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240/tokenizer_config.json
+[INFO|2026-03-17 12:33:10] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240/chat_template.jinja
+[INFO|2026-03-17 12:33:10] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240/tokenizer_config.json
+[INFO|2026-03-17 12:33:10] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240/chat_template.jinja
+[INFO|2026-03-17 12:33:12] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-240/processor_config.json
+[INFO|2026-03-17 12:33:48] logging.py:144 >> {'loss': 0.0286, 'learning_rate': 3.4539e-05, 'epoch': 18.89, 'throughput': 1342.39}
+[INFO|2026-03-17 12:34:20] logging.py:144 >> {'loss': 0.0273, 'learning_rate': 3.3978e-05, 'epoch': 19.24, 'throughput': 1347.19}
+[INFO|2026-03-17 12:34:54] logging.py:144 >> {'loss': 0.0251, 'learning_rate': 3.3412e-05, 'epoch': 19.65, 'throughput': 1354.46}
+[INFO|2026-03-17 12:35:23] logging.py:144 >> {'loss': 0.0329, 'learning_rate': 3.2840e-05, 'epoch': 20.00, 'throughput': 1360.91}
+[INFO|2026-03-17 12:35:23] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260
+[INFO|2026-03-17 12:35:23] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260/chat_template.jinja
+[INFO|2026-03-17 12:35:23] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260/tokenizer_config.json
+[INFO|2026-03-17 12:35:24] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260/chat_template.jinja
+[INFO|2026-03-17 12:35:24] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260/tokenizer_config.json
+[INFO|2026-03-17 12:35:24] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260/chat_template.jinja
+[INFO|2026-03-17 12:35:26] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-260/processor_config.json
+[INFO|2026-03-17 12:36:07] logging.py:144 >> {'loss': 0.0279, 'learning_rate': 3.2264e-05, 'epoch': 20.40, 'throughput': 1361.89}
+[INFO|2026-03-17 12:36:46] logging.py:144 >> {'loss': 0.0245, 'learning_rate': 3.1684e-05, 'epoch': 20.81, 'throughput': 1365.09}
+[INFO|2026-03-17 12:37:19] logging.py:144 >> {'loss': 0.0143, 'learning_rate': 3.1100e-05, 'epoch': 21.16, 'throughput': 1368.97}
+[INFO|2026-03-17 12:37:53] logging.py:144 >> {'loss': 0.0171, 'learning_rate': 3.0513e-05, 'epoch': 21.57, 'throughput': 1375.03}
+[INFO|2026-03-17 12:37:53] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280
+[INFO|2026-03-17 12:37:53] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280/chat_template.jinja
+[INFO|2026-03-17 12:37:53] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280/tokenizer_config.json
+[INFO|2026-03-17 12:37:54] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280/chat_template.jinja
+[INFO|2026-03-17 12:37:54] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280/tokenizer_config.json
+[INFO|2026-03-17 12:37:54] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280/chat_template.jinja
+[INFO|2026-03-17 12:37:55] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-280/processor_config.json
+[INFO|2026-03-17 12:38:30] logging.py:144 >> {'loss': 0.0171, 'learning_rate': 2.9922e-05, 'epoch': 21.97, 'throughput': 1379.49}
+[INFO|2026-03-17 12:39:06] logging.py:144 >> {'loss': 0.0125, 'learning_rate': 2.9328e-05, 'epoch': 22.32, 'throughput': 1381.32}
+[INFO|2026-03-17 12:39:45] logging.py:144 >> {'loss': 0.0149, 'learning_rate': 2.8732e-05, 'epoch': 22.73, 'throughput': 1383.84}
+[INFO|2026-03-17 12:40:16] logging.py:144 >> {'loss': 0.0113, 'learning_rate': 2.8133e-05, 'epoch': 23.08, 'throughput': 1388.56}
+[INFO|2026-03-17 12:40:16] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300
+[INFO|2026-03-17 12:40:16] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300/chat_template.jinja
+[INFO|2026-03-17 12:40:16] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300/tokenizer_config.json
+[INFO|2026-03-17 12:40:17] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300/chat_template.jinja
+[INFO|2026-03-17 12:40:17] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300/tokenizer_config.json
+[INFO|2026-03-17 12:40:17] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300/chat_template.jinja
+[INFO|2026-03-17 12:40:18] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-300/processor_config.json
+[INFO|2026-03-17 12:40:52] logging.py:144 >> {'loss': 0.0083, 'learning_rate': 2.7533e-05, 'epoch': 23.48, 'throughput': 1392.67}
+[INFO|2026-03-17 12:41:32] logging.py:144 >> {'loss': 0.0075, 'learning_rate': 2.6931e-05, 'epoch': 23.89, 'throughput': 1395.18}
+[INFO|2026-03-17 12:42:03] logging.py:144 >> {'loss': 0.0071, 'learning_rate': 2.6329e-05, 'epoch': 24.24, 'throughput': 1398.98}
+[INFO|2026-03-17 12:42:38] logging.py:144 >> {'loss': 0.0037, 'learning_rate': 2.5725e-05, 'epoch': 24.65, 'throughput': 1403.85}
+[INFO|2026-03-17 12:42:38] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320
+[INFO|2026-03-17 12:42:38] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320/chat_template.jinja
+[INFO|2026-03-17 12:42:38] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320/tokenizer_config.json
+[INFO|2026-03-17 12:42:38] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320/chat_template.jinja
+[INFO|2026-03-17 12:42:38] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320/tokenizer_config.json
+[INFO|2026-03-17 12:42:39] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320/chat_template.jinja
+[INFO|2026-03-17 12:42:40] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-320/processor_config.json
+[INFO|2026-03-17 12:43:19] logging.py:144 >> {'loss': 0.0072, 'learning_rate': 2.5121e-05, 'epoch': 25.00, 'throughput': 1402.35}
+[INFO|2026-03-17 12:43:55] logging.py:144 >> {'loss': 0.0068, 'learning_rate': 2.4517e-05, 'epoch': 25.40, 'throughput': 1406.41}
+[INFO|2026-03-17 12:44:31] logging.py:144 >> {'loss': 0.0070, 'learning_rate': 2.3913e-05, 'epoch': 25.81, 'throughput': 1409.80}
+[INFO|2026-03-17 12:45:09] logging.py:144 >> {'loss': 0.0055, 'learning_rate': 2.3310e-05, 'epoch': 26.16, 'throughput': 1410.26}
+[INFO|2026-03-17 12:45:09] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340
+[INFO|2026-03-17 12:45:09] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340/chat_template.jinja
+[INFO|2026-03-17 12:45:09] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340/tokenizer_config.json
+[INFO|2026-03-17 12:45:09] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340/chat_template.jinja
+[INFO|2026-03-17 12:45:09] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340/tokenizer_config.json
+[INFO|2026-03-17 12:45:10] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340/chat_template.jinja
+[INFO|2026-03-17 12:45:10] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-340/processor_config.json
+[INFO|2026-03-17 12:45:46] logging.py:144 >> {'loss': 0.0034, 'learning_rate': 2.2707e-05, 'epoch': 26.57, 'throughput': 1413.53}
+[INFO|2026-03-17 12:46:21] logging.py:144 >> {'loss': 0.0022, 'learning_rate': 2.2107e-05, 'epoch': 26.97, 'throughput': 1417.68}
+[INFO|2026-03-17 12:47:00] logging.py:144 >> {'loss': 0.0019, 'learning_rate': 2.1507e-05, 'epoch': 27.32, 'throughput': 1416.72}
+[INFO|2026-03-17 12:47:38] logging.py:144 >> {'loss': 0.0016, 'learning_rate': 2.0910e-05, 'epoch': 27.73, 'throughput': 1419.38}
+[INFO|2026-03-17 12:47:38] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360
+[INFO|2026-03-17 12:47:38] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360/chat_template.jinja
+[INFO|2026-03-17 12:47:38] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360/tokenizer_config.json
+[INFO|2026-03-17 12:47:39] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360/chat_template.jinja
+[INFO|2026-03-17 12:47:39] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360/tokenizer_config.json
+[INFO|2026-03-17 12:47:39] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360/chat_template.jinja
+[INFO|2026-03-17 12:47:40] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-360/processor_config.json
+[INFO|2026-03-17 12:48:10] logging.py:144 >> {'loss': 0.0013, 'learning_rate': 2.0315e-05, 'epoch': 28.08, 'throughput': 1422.44}
+[INFO|2026-03-17 12:48:44] logging.py:144 >> {'loss': 0.0008, 'learning_rate': 1.9723e-05, 'epoch': 28.48, 'throughput': 1426.45}
+[INFO|2026-03-17 12:49:21] logging.py:144 >> {'loss': 0.0008, 'learning_rate': 1.9134e-05, 'epoch': 28.89, 'throughput': 1429.26}
+[INFO|2026-03-17 12:49:58] logging.py:144 >> {'loss': 0.0007, 'learning_rate': 1.8549e-05, 'epoch': 29.24, 'throughput': 1429.71}
+[INFO|2026-03-17 12:49:58] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380
+[INFO|2026-03-17 12:49:58] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380/chat_template.jinja
+[INFO|2026-03-17 12:49:58] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380/tokenizer_config.json
+[INFO|2026-03-17 12:49:58] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380/chat_template.jinja
+[INFO|2026-03-17 12:49:58] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380/tokenizer_config.json
+[INFO|2026-03-17 12:49:58] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380/chat_template.jinja
+[INFO|2026-03-17 12:49:59] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-380/processor_config.json
+[INFO|2026-03-17 12:50:33] logging.py:144 >> {'loss': 0.0006, 'learning_rate': 1.7967e-05, 'epoch': 29.65, 'throughput': 1433.01}
+[INFO|2026-03-17 12:51:07] logging.py:144 >> {'loss': 0.0006, 'learning_rate': 1.7390e-05, 'epoch': 30.00, 'throughput': 1434.91}
+[INFO|2026-03-17 12:51:51] logging.py:144 >> {'loss': 0.0005, 'learning_rate': 1.6816e-05, 'epoch': 30.40, 'throughput': 1434.33}
+[INFO|2026-03-17 12:52:29] logging.py:144 >> {'loss': 0.0005, 'learning_rate': 1.6248e-05, 'epoch': 30.81, 'throughput': 1436.33}
+[INFO|2026-03-17 12:52:29] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400
+[INFO|2026-03-17 12:52:29] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400/chat_template.jinja
+[INFO|2026-03-17 12:52:29] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400/tokenizer_config.json
+[INFO|2026-03-17 12:52:30] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400/chat_template.jinja
+[INFO|2026-03-17 12:52:30] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400/tokenizer_config.json
+[INFO|2026-03-17 12:52:30] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400/chat_template.jinja
+[INFO|2026-03-17 12:52:30] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-400/processor_config.json
+[INFO|2026-03-17 12:53:00] logging.py:144 >> {'loss': 0.0005, 'learning_rate': 1.5685e-05, 'epoch': 31.16, 'throughput': 1438.97}
+[INFO|2026-03-17 12:53:35] logging.py:144 >> {'loss': 0.0005, 'learning_rate': 1.5127e-05, 'epoch': 31.57, 'throughput': 1442.61}
+[INFO|2026-03-17 12:54:13] logging.py:144 >> {'loss': 0.0005, 'learning_rate': 1.4575e-05, 'epoch': 31.97, 'throughput': 1444.26}
+[INFO|2026-03-17 12:54:49] logging.py:144 >> {'loss': 0.0005, 'learning_rate': 1.4029e-05, 'epoch': 32.32, 'throughput': 1445.05}
+[INFO|2026-03-17 12:54:49] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420
+[INFO|2026-03-17 12:54:49] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420/chat_template.jinja
+[INFO|2026-03-17 12:54:49] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420/tokenizer_config.json
+[INFO|2026-03-17 12:54:49] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420/chat_template.jinja
+[INFO|2026-03-17 12:54:49] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420/tokenizer_config.json
+[INFO|2026-03-17 12:54:50] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420/chat_template.jinja
+[INFO|2026-03-17 12:54:52] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-420/processor_config.json
+[INFO|2026-03-17 12:55:26] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.3489e-05, 'epoch': 32.73, 'throughput': 1447.35}
+[INFO|2026-03-17 12:55:58] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.2956e-05, 'epoch': 33.08, 'throughput': 1449.43}
+[INFO|2026-03-17 12:56:36] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.2430e-05, 'epoch': 33.48, 'throughput': 1451.21}
+[INFO|2026-03-17 12:57:14] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.1912e-05, 'epoch': 33.89, 'throughput': 1453.06}
+[INFO|2026-03-17 12:57:14] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440
+[INFO|2026-03-17 12:57:14] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440/chat_template.jinja
+[INFO|2026-03-17 12:57:14] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440/tokenizer_config.json
+[INFO|2026-03-17 12:57:14] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440/chat_template.jinja
+[INFO|2026-03-17 12:57:14] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440/tokenizer_config.json
+[INFO|2026-03-17 12:57:15] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440/chat_template.jinja
+[INFO|2026-03-17 12:57:15] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-440/processor_config.json
+[INFO|2026-03-17 12:57:50] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.1401e-05, 'epoch': 34.24, 'throughput': 1453.49}
+[INFO|2026-03-17 12:58:44] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.0898e-05, 'epoch': 34.65, 'throughput': 1448.57}
+[INFO|2026-03-17 12:59:21] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.0403e-05, 'epoch': 35.00, 'throughput': 1448.81}
+[INFO|2026-03-17 12:59:53] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 9.9171e-06, 'epoch': 35.40, 'throughput': 1452.68}
+[INFO|2026-03-17 12:59:53] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460
+[INFO|2026-03-17 12:59:53] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460/chat_template.jinja
+[INFO|2026-03-17 12:59:53] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460/tokenizer_config.json
+[INFO|2026-03-17 12:59:54] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460/chat_template.jinja
+[INFO|2026-03-17 12:59:54] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460/tokenizer_config.json
+[INFO|2026-03-17 12:59:55] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460/chat_template.jinja
+[INFO|2026-03-17 12:59:56] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-460/processor_config.json
+[INFO|2026-03-17 13:00:39] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 9.4398e-06, 'epoch': 35.81, 'throughput': 1451.44}
+[INFO|2026-03-17 13:01:13] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 8.9715e-06, 'epoch': 36.16, 'throughput': 1452.35}
+[INFO|2026-03-17 13:01:49] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 8.5126e-06, 'epoch': 36.57, 'throughput': 1454.78}
+[INFO|2026-03-17 13:02:25] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 8.0633e-06, 'epoch': 36.97, 'throughput': 1457.03}
+[INFO|2026-03-17 13:02:25] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480
+[INFO|2026-03-17 13:02:26] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480/chat_template.jinja
+[INFO|2026-03-17 13:02:26] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480/tokenizer_config.json
+[INFO|2026-03-17 13:02:27] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480/chat_template.jinja
+[INFO|2026-03-17 13:02:27] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480/tokenizer_config.json
+[INFO|2026-03-17 13:02:27] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480/chat_template.jinja
+[INFO|2026-03-17 13:02:28] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-480/processor_config.json
+[INFO|2026-03-17 13:03:09] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 7.6239e-06, 'epoch': 37.32, 'throughput': 1454.41}
+[INFO|2026-03-17 13:03:49] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 7.1946e-06, 'epoch': 37.73, 'throughput': 1455.17}
+[INFO|2026-03-17 13:04:21] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 6.7758e-06, 'epoch': 38.08, 'throughput': 1457.12}
+[INFO|2026-03-17 13:04:55] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 6.3676e-06, 'epoch': 38.48, 'throughput': 1459.98}
+[INFO|2026-03-17 13:04:55] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500
+[INFO|2026-03-17 13:04:55] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500/chat_template.jinja
+[INFO|2026-03-17 13:04:55] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500/tokenizer_config.json
+[INFO|2026-03-17 13:04:56] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500/chat_template.jinja
+[INFO|2026-03-17 13:04:56] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500/tokenizer_config.json
+[INFO|2026-03-17 13:04:56] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500/chat_template.jinja
+[INFO|2026-03-17 13:04:57] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-500/processor_config.json
+[INFO|2026-03-17 13:05:30] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 5.9702e-06, 'epoch': 38.89, 'throughput': 1462.50}
+[INFO|2026-03-17 13:06:02] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 5.5840e-06, 'epoch': 39.24, 'throughput': 1464.45}
+[INFO|2026-03-17 13:06:44] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 5.2092e-06, 'epoch': 39.65, 'throughput': 1464.27}
+[INFO|2026-03-17 13:07:13] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 4.8458e-06, 'epoch': 40.00, 'throughput': 1466.87}
+[INFO|2026-03-17 13:07:13] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520
+[INFO|2026-03-17 13:07:13] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520/chat_template.jinja
+[INFO|2026-03-17 13:07:13] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520/tokenizer_config.json
+[INFO|2026-03-17 13:07:14] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520/chat_template.jinja
+[INFO|2026-03-17 13:07:14] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520/tokenizer_config.json
+[INFO|2026-03-17 13:07:14] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520/chat_template.jinja
+[INFO|2026-03-17 13:07:15] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-520/processor_config.json
+[INFO|2026-03-17 13:07:49] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 4.4943e-06, 'epoch': 40.40, 'throughput': 1468.88}
+[INFO|2026-03-17 13:08:28] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 4.1547e-06, 'epoch': 40.81, 'throughput': 1469.98}
+[INFO|2026-03-17 13:08:59] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 3.8273e-06, 'epoch': 41.16, 'throughput': 1471.98}
+[INFO|2026-03-17 13:09:33] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 3.5123e-06, 'epoch': 41.57, 'throughput': 1474.53}
+[INFO|2026-03-17 13:09:33] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540
+[INFO|2026-03-17 13:09:33] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540/chat_template.jinja
+[INFO|2026-03-17 13:09:33] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540/tokenizer_config.json
+[INFO|2026-03-17 13:09:34] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540/chat_template.jinja
+[INFO|2026-03-17 13:09:34] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540/tokenizer_config.json
+[INFO|2026-03-17 13:09:34] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540/chat_template.jinja
+[INFO|2026-03-17 13:09:35] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-540/processor_config.json
+[INFO|2026-03-17 13:10:14] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 3.2098e-06, 'epoch': 41.97, 'throughput': 1474.82}
+[INFO|2026-03-17 13:10:49] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 2.9200e-06, 'epoch': 42.32, 'throughput': 1475.32}
+[INFO|2026-03-17 13:11:25] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 2.6431e-06, 'epoch': 42.73, 'throughput': 1477.26}
+[INFO|2026-03-17 13:11:57] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 2.3793e-06, 'epoch': 43.08, 'throughput': 1478.79}
+[INFO|2026-03-17 13:11:57] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560
+[INFO|2026-03-17 13:11:57] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560/chat_template.jinja
+[INFO|2026-03-17 13:11:57] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560/tokenizer_config.json
+[INFO|2026-03-17 13:11:58] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560/chat_template.jinja
+[INFO|2026-03-17 13:11:58] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560/tokenizer_config.json
+[INFO|2026-03-17 13:11:58] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560/chat_template.jinja
+[INFO|2026-03-17 13:11:59] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-560/processor_config.json
+[INFO|2026-03-17 13:12:41] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 2.1287e-06, 'epoch': 43.48, 'throughput': 1477.74}
+[INFO|2026-03-17 13:13:25] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.8915e-06, 'epoch': 43.89, 'throughput': 1477.09}
+[INFO|2026-03-17 13:13:56] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.6677e-06, 'epoch': 44.24, 'throughput': 1478.68}
+[INFO|2026-03-17 13:14:30] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.4576e-06, 'epoch': 44.65, 'throughput': 1481.00}
+[INFO|2026-03-17 13:14:30] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580
+[INFO|2026-03-17 13:14:31] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580/chat_template.jinja
+[INFO|2026-03-17 13:14:31] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580/tokenizer_config.json
+[INFO|2026-03-17 13:14:31] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580/chat_template.jinja
+[INFO|2026-03-17 13:14:31] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580/tokenizer_config.json
+[INFO|2026-03-17 13:14:31] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580/chat_template.jinja
+[INFO|2026-03-17 13:14:32] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-580/processor_config.json
+[INFO|2026-03-17 13:15:02] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.2612e-06, 'epoch': 45.00, 'throughput': 1482.37}
+[INFO|2026-03-17 13:15:45] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.0787e-06, 'epoch': 45.40, 'throughput': 1481.94}
+[INFO|2026-03-17 13:16:19] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 9.1014e-07, 'epoch': 45.81, 'throughput': 1484.28}
+[INFO|2026-03-17 13:16:51] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 7.5565e-07, 'epoch': 46.16, 'throughput': 1485.51}
+[INFO|2026-03-17 13:16:51] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600
+[INFO|2026-03-17 13:16:52] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600/chat_template.jinja
+[INFO|2026-03-17 13:16:52] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600/tokenizer_config.json
+[INFO|2026-03-17 13:16:52] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600/chat_template.jinja
+[INFO|2026-03-17 13:16:52] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600/tokenizer_config.json
+[INFO|2026-03-17 13:16:52] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600/chat_template.jinja
+[INFO|2026-03-17 13:16:53] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-600/processor_config.json
+[INFO|2026-03-17 13:17:35] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 6.1533e-07, 'epoch': 46.57, 'throughput': 1484.74}
+[INFO|2026-03-17 13:18:11] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 4.8925e-07, 'epoch': 46.97, 'throughput': 1486.57}
+[INFO|2026-03-17 13:18:42] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 3.7748e-07, 'epoch': 47.32, 'throughput': 1488.15}
+[INFO|2026-03-17 13:19:23] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 2.8009e-07, 'epoch': 47.73, 'throughput': 1488.15}
+[INFO|2026-03-17 13:19:23] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620
+[INFO|2026-03-17 13:19:24] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620/chat_template.jinja
+[INFO|2026-03-17 13:19:24] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620/tokenizer_config.json
+[INFO|2026-03-17 13:19:25] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620/chat_template.jinja
+[INFO|2026-03-17 13:19:25] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620/tokenizer_config.json
+[INFO|2026-03-17 13:19:25] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620/chat_template.jinja
+[INFO|2026-03-17 13:19:26] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-620/processor_config.json
+[INFO|2026-03-17 13:20:00] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.9713e-07, 'epoch': 48.08, 'throughput': 1487.77}
+[INFO|2026-03-17 13:20:35] logging.py:144 >> {'loss': 0.0004, 'learning_rate': 1.2866e-07, 'epoch': 48.48, 'throughput': 1489.80}
+[INFO|2026-03-17 13:21:10] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 7.4715e-08, 'epoch': 48.89, 'throughput': 1491.70}
+[INFO|2026-03-17 13:21:40] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 3.5324e-08, 'epoch': 49.24, 'throughput': 1493.42}
+[INFO|2026-03-17 13:21:40] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640
+[INFO|2026-03-17 13:21:40] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640/chat_template.jinja
+[INFO|2026-03-17 13:21:40] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640/tokenizer_config.json
+[INFO|2026-03-17 13:21:40] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640/chat_template.jinja
+[INFO|2026-03-17 13:21:40] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640/tokenizer_config.json
+[INFO|2026-03-17 13:21:41] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640/chat_template.jinja
+[INFO|2026-03-17 13:21:42] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-640/processor_config.json
+[INFO|2026-03-17 13:22:25] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 1.0511e-08, 'epoch': 49.65, 'throughput': 1492.39}
+[INFO|2026-03-17 13:22:53] logging.py:144 >> {'loss': 0.0003, 'learning_rate': 2.9200e-10, 'epoch': 50.00, 'throughput': 1494.57}
+[INFO|2026-03-17 13:22:53] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650
+[INFO|2026-03-17 13:22:53] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650/chat_template.jinja
+[INFO|2026-03-17 13:22:53] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650/tokenizer_config.json
+[INFO|2026-03-17 13:22:54] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650/chat_template.jinja
+[INFO|2026-03-17 13:22:54] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650/tokenizer_config.json
+[INFO|2026-03-17 13:22:54] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650/chat_template.jinja
+[INFO|2026-03-17 13:22:55] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/checkpoint-650/processor_config.json
+[INFO|2026-03-17 13:22:55] trainer.py:1863 >> 
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+[INFO|2026-03-17 13:22:55] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/chat_template.jinja
+[INFO|2026-03-17 13:22:55] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/tokenizer_config.json
+[INFO|2026-03-17 13:22:55] processing_utils.py:852 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/chat_template.jinja
+[INFO|2026-03-17 13:22:56] processing_utils.py:870 >> processor saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/processor_config.json
+[INFO|2026-03-17 13:22:56] trainer.py:3797 >> Saving model checkpoint to /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59
+[INFO|2026-03-17 13:22:56] tokenization_utils_base.py:3224 >> chat template saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/chat_template.jinja
+[INFO|2026-03-17 13:22:56] tokenization_utils_base.py:2078 >> tokenizer config file saved in /mnt/data1/liujingzhi/LlamaFactory/train_2026-03-17-11-55-59/tokenizer_config.json
+[WARNING|2026-03-17 13:22:56] logging.py:149 >> No metric eval_loss to plot.
+[WARNING|2026-03-17 13:22:56] logging.py:149 >> No metric eval_accuracy to plot.
+[INFO|2026-03-17 13:22:56] modelcard.py:266 >> Dropping the following result as it does not have all the necessary fields:
+{'task': {'name': 'Causal Language Modeling', 'type': 'text-generation'}}
